@@ -1,2 +1,3 @@
-pub mod rm;
 pub mod config;
+pub mod executor;
+mod func;
