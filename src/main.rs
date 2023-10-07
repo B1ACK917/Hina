@@ -4,6 +4,7 @@ use std::env;
 use std::process;
 use crate::core::config::Config;
 use crate::core::executor::Executor;
+use crate::core::global::DEBUG;
 
 fn main() {
     // Collect args
@@ -17,6 +18,8 @@ fn main() {
 
     // Build executor with config
     let executor = Executor::build(config);
-    dbg!(executor.clone());
+    if *DEBUG {
+        dbg!(executor.clone());
+    }
     executor.run();
 }

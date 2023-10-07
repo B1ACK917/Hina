@@ -1,6 +1,7 @@
 #[derive(Debug, Clone)]
 pub enum Action {
     Remove,
+    Restore,
     Process,
     None,
 }
@@ -15,6 +16,7 @@ impl Config {
     pub fn build(args: &[String]) -> Result<Config, &'static str> {
         let action_ = match &args[1] as &str {
             "rm" => { Action::Remove }
+            "rs" => { Action::Restore }
             "proc" => { Action::Process }
             _ => { Action::None }
         };
@@ -40,7 +42,7 @@ impl Config {
         return &self.args;
     }
 
-    pub fn arg_num(&self)->u8 {
+    pub fn arg_num(&self) -> u8 {
         return self.args.len() as u8;
     }
 }
