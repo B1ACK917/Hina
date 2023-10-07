@@ -6,6 +6,7 @@ use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use rand::{thread_rng, Rng};
 use rand::distributions::Alphanumeric;
+use chrono::{DateTime, Local};
 
 use crate::core::global::{DEBUG, RAND_STR_LEN, RECYCLE, RM_STACK, SPLITTER};
 
@@ -82,7 +83,10 @@ pub fn show_rm_stack(rm_stack: &Vec<String>) -> Vec<(PathBuf, PathBuf)> {
         let file = PathBuf::from(&record[0]);
         let path = PathBuf::from(&record[1]);
         paths.push((file.clone(), path.clone()));
-        println!("{}: {}", i, record[0]);
+        println!("{}: {}\tDelete Time: {}",
+                 i,
+                 &record[0][..record[0].len() - (RAND_STR_LEN as usize)],
+                 record[2]);
     }
     return paths;
 }
@@ -123,7 +127,13 @@ pub fn remove(target: &String,
         .arg(recycle.clone())
         .output()
         .unwrap();
-    let rm_log = format!("{}{}{}", recycle.display().to_string(), SPLITTER, file_path);
+    let now: DateTime<Local> = Local::now();
+    let rm_log = format!("{}{}{}{}{}",
+                         recycle.display().to_string(),
+                         SPLITTER,
+                         file_path,
+                         SPLITTER,
+                         now.format("%Y-%m-%d %H:%M:%S%.3f"));
     rm_stack.push(rm_log);
 }
 

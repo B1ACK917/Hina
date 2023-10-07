@@ -1,7 +1,7 @@
 use crate::core::config::{Action, Config};
 use crate::core::func;
 
-use std::env;
+use std::{env, io};
 use std::path::PathBuf;
 use std::process::exit;
 use crate::core::func::remove;
@@ -51,7 +51,10 @@ impl Executor {
 
             Action::Restore => {
                 let rm_paths = func::show_rm_stack(&rm_stack);
-                func::restore(rm_paths, 0);
+                let mut input = String::new();
+                io::stdin().read_line(&mut input).unwrap();
+                let index: u8 = input.parse().unwrap_or(0);
+                func::restore(rm_paths, index);
             }
 
             Action::Process => {
