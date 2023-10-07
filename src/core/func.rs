@@ -108,7 +108,7 @@ pub fn remove(target: &String,
     recycle.push(RECYCLE);
     let rm_target = PathBuf::from(target);
     let mut file_name: String;
-    let mut file_path: String;
+    let file_path: String;
 
     if rm_target.is_absolute() {
         file_name = String::from(rm_target.file_name().unwrap().to_str().unwrap());
