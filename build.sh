@@ -1,2 +1,2 @@
 cargo build --release
-cp ./target/release/nijika nijika
+cp ./target/release/hina hina

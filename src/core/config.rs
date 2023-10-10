@@ -30,7 +30,7 @@ impl Config {
                 "restore" => { Action::Restore }
                 "et" => { Action::EmptyTrash }
                 "empty-trash" => { Action::EmptyTrash }
-                "mkdir" => { Action::MakeNestedDir }
+                "mkndir" => { Action::MakeNestedDir }
                 "s2l" => { Action::SymlinkToLink }
                 "l2s" => { Action::LinkToSymlink }
                 "proc" => { Action::Process }

@@ -3,7 +3,9 @@ use std::fs;
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::PathBuf;
+use std::process::Stdio;
 
+use execute::{Execute, shell};
 use rand::{Rng, thread_rng};
 use rand::distributions::Alphanumeric;
 
@@ -15,6 +17,13 @@ pub fn get_home() -> String {
 
 pub fn get_user() -> String {
     return env::var("USER").unwrap();
+}
+
+pub fn execute_command(input: &String) -> String {
+    let mut command = shell(input);
+    command.stdout(Stdio::piped());
+    let output = String::from_utf8(command.execute_output().unwrap().stdout).unwrap();
+    return output;
 }
 
 pub fn init_data_dir(data_path: &PathBuf) {
@@ -51,7 +60,7 @@ pub fn load_rm_stack(data_path: &PathBuf) -> Vec<String> {
         .collect();
 
     if *DEBUG {
-        dbg!(rm_stack.clone());
+        dbg!(&rm_stack);
     }
 
     return rm_stack;
@@ -73,7 +82,7 @@ pub fn save_rm_stack(data_path: &PathBuf,
     }
 
     if *DEBUG {
-        dbg!(rm_stack.clone());
+        dbg!(&rm_stack);
     }
 }
 
@@ -95,7 +104,7 @@ pub fn show_rm_stack(rm_stack: &Vec<String>) -> Vec<(PathBuf, PathBuf)> {
                  record[2]);
     }
     if *DEBUG {
-        dbg!(paths.clone());
+        dbg!(&paths);
     }
     return paths;
 }

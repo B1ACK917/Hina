@@ -21,7 +21,7 @@ fn main() {
     // Build executor with config
     let executor = Executor::build(config);
     if *DEBUG {
-        dbg!(executor.clone());
+        dbg!(&executor);
     }
     executor.run();
 }

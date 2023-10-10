@@ -1,5 +1,5 @@
 [package]
-name = "nijika"
+name = "hina"
 version = "0.1.0"
 edition = "2021"
 
@@ -9,3 +9,4 @@ edition = "2021"
 once_cell = "1.18.0"
 rand = "0.8.5"
 chrono = "0.4.31"
+execute = "0.2.12"

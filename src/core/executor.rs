@@ -5,7 +5,7 @@ use std::process::exit;
 use crate::core::config::{Action, Config};
 use crate::core::func;
 use crate::core::global::DATA_DIR;
-use crate::event::fs::make_nested_dir;
+use crate::event::fs;
 use crate::event::process;
 use crate::event::recycle;
 
@@ -77,11 +77,25 @@ impl Executor {
             }
 
             Action::MakeNestedDir => {
-                make_nested_dir(&self.work_path, false);
+                fs::make_nested_dir(&self.work_path, false);
             }
 
-            Action::SymlinkToLink => {}
-            Action::LinkToSymlink => {}
+            Action::SymlinkToLink => {
+                fs::symlink_to_link(&self.work_path, false);
+            }
+
+            Action::LinkToSymlink => {
+                let link_src_dir_str;
+
+                if args.len() > 0 {
+                    link_src_dir_str = args[0].clone();
+                } else {
+                    link_src_dir_str = String::from("/");
+                    println!("No source dir found, finding from /");
+                }
+                let link_src_dir = PathBuf::from(&link_src_dir_str);
+                fs::link_to_symlink(&self.work_path, &link_src_dir, false);
+            }
 
             Action::None => {}
             Action::ILLEGAL => {}
