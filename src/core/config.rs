@@ -2,8 +2,10 @@
 pub enum Action {
     Remove,
     Restore,
+    EmptyTrash,
     Process,
     None,
+    ILLEGAL,
 }
 
 #[derive(Debug, Clone)]
@@ -14,21 +16,33 @@ pub struct Config {
 
 impl Config {
     pub fn build(args: &[String]) -> Result<Config, &'static str> {
-        let action_ = match &args[1] as &str {
-            "rm" => { Action::Remove }
-            "rs" => { Action::Restore }
-            "proc" => { Action::Process }
-            _ => { Action::None }
-        };
+        let action_: Action;
+        if args.len() < 2 {
+            action_ = Action::None;
+        } else {
+            action_ = match &args[1] as &str {
+                "rm" => { Action::Remove }
+                "remove" => { Action::Remove }
+                "rs" => { Action::Restore }
+                "restore" => { Action::Restore }
+                "et" => { Action::EmptyTrash }
+                "empty-trash" => { Action::EmptyTrash }
+                "proc" => { Action::Process }
+                _ => { Action::ILLEGAL }
+            };
+        }
 
-        if matches!(action_,Action::None) {
+        if matches!(action_,Action::ILLEGAL) {
             return Err("Not a legal action");
         }
 
         let mut args_ = Vec::new();
-        for arg in &args[2..] {
-            args_.push(arg.clone());
+        if args.len() > 2 {
+            for arg in &args[2..] {
+                args_.push(arg.clone());
+            }
         }
+
         let config = Config { action: action_, args: args_ };
 
         return Ok(config);

@@ -11,7 +11,6 @@ use crate::core::global::DATA_DIR;
 pub struct Executor {
     config: Config,
     work_path: PathBuf,
-    home_path: PathBuf,
     data_path: PathBuf,
     user: String,
 }
@@ -23,13 +22,12 @@ impl Executor {
 
         let work_path = PathBuf::from(work_path_str);
         let home_path = PathBuf::from(home_path_str);
-        let mut data_path = home_path.clone();
+        let mut data_path = home_path;
         data_path.push(DATA_DIR);
 
         return Executor {
             config,
             work_path,
-            home_path,
             data_path,
             user: func::get_user(),
         };
@@ -50,11 +48,15 @@ impl Executor {
             }
 
             Action::Restore => {
-                let rm_paths = func::show_rm_stack(&rm_stack);
-                let mut input = String::new();
-                io::stdin().read_line(&mut input).unwrap();
-                let index: u8 = input.parse().unwrap_or(0);
-                func::restore(rm_paths, index);
+                if rm_stack.len() > 0 {
+                    let rm_paths = func::show_rm_stack(&rm_stack);
+                    let mut input = String::new();
+                    io::stdin().read_line(&mut input).unwrap();
+                    let index: i8 = input.trim().parse().unwrap_or(-1);
+                    func::restore(rm_paths, index, &mut rm_stack);
+                } else {
+                    println!("Recycle bin empty.");
+                }
             }
 
             Action::Process => {
@@ -68,7 +70,12 @@ impl Executor {
                 }
             }
 
+            Action::EmptyTrash => {
+                func::empty_trash_bin(&self.data_path, &mut rm_stack);
+            }
+
             Action::None => {}
+            Action::ILLEGAL => {}
         }
 
         func::save_rm_stack(&self.data_path, &rm_stack);

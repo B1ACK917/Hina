@@ -59,17 +59,22 @@ pub fn load_rm_stack(data_path: &PathBuf) -> Vec<String> {
 }
 
 pub fn save_rm_stack(data_path: &PathBuf,
-                     contents: &Vec<String>) {
+                     rm_stack: &Vec<String>) {
     let mut data_path_ = data_path.clone();
     data_path_.push(RM_STACK);
     let mut file = OpenOptions::new()
         .read(true)
         .write(true)
         .create(true)
+        .truncate(true)
         .open(data_path_).unwrap();
-    for content in contents {
+    for content in rm_stack {
         file.write(content.as_bytes()).unwrap();
         file.write(b"\n").unwrap();
+    }
+
+    if *DEBUG {
+        dbg!(rm_stack.clone());
     }
 }
 
@@ -81,12 +86,17 @@ pub fn show_rm_stack(rm_stack: &Vec<String>) -> Vec<(PathBuf, PathBuf)> {
             .map(|s| s.to_string())
             .collect();
         let file = PathBuf::from(&record[0]);
-        let path = PathBuf::from(&record[1]);
+        let mut path = PathBuf::from(&record[1]);
+        let filename = file.file_name().unwrap().to_str().unwrap();
+        path.push(&filename[..filename.len() - (RAND_STR_LEN as usize)]);
         paths.push((file.clone(), path.clone()));
         println!("{}: {}\tDelete Time: {}",
                  i,
                  &record[0][..record[0].len() - (RAND_STR_LEN as usize)],
                  record[2]);
+    }
+    if *DEBUG {
+        dbg!(paths.clone());
     }
     return paths;
 }
@@ -109,6 +119,10 @@ pub fn remove(target: &String,
     let rm_target = PathBuf::from(target);
     let mut file_name: String;
     let file_path: String;
+
+    if !rm_target.exists() {
+        return;
+    }
 
     if rm_target.is_absolute() {
         file_name = String::from(rm_target.file_name().unwrap().to_str().unwrap());
@@ -138,7 +152,41 @@ pub fn remove(target: &String,
 }
 
 pub fn restore(rm_paths: Vec<(PathBuf, PathBuf)>,
-               index: u8) {}
+               index: i8,
+               rm_stack: &mut Vec<String>) {
+    if index < 0 || index as usize >= rm_paths.len() {
+        return;
+    }
+    let (rm_tar, rm_src) = &rm_paths[index as usize];
+    if rm_src.exists() {
+        println!("{} already exists, cannot restore", rm_src.display());
+    } else {
+        Command::new("mv")
+            .arg(rm_tar)
+            .arg(rm_src)
+            .output()
+            .unwrap();
+        println!("{} restored", rm_src.display());
+        rm_stack.remove(index as usize);
+    }
+}
+
+pub fn empty_trash_bin(data_path: &PathBuf,
+                       rm_stack: &mut Vec<String>) {
+    let mut recycle = data_path.clone();
+    recycle.push(RECYCLE);
+    Command::new("rm")
+        .arg("-r")
+        .arg("-f")
+        .arg(&recycle)
+        .output()
+        .unwrap();
+    Command::new("mkdir")
+        .arg(&recycle)
+        .output()
+        .unwrap();
+    rm_stack.clear();
+}
 
 pub fn show_user_all_process(user: &String) {
     let all_process = Command::new("ps")
