@@ -82,4 +82,5 @@ pub fn empty_trash_bin(data_path: &PathBuf,
         .output()
         .unwrap();
     rm_stack.clear();
+    println!("Recycle bin emptied");
 }

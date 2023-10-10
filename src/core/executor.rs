@@ -5,6 +5,7 @@ use std::process::exit;
 use crate::core::config::{Action, Config};
 use crate::core::func;
 use crate::core::global::DATA_DIR;
+use crate::event::fs::make_nested_dir;
 use crate::event::process;
 use crate::event::recycle;
 
@@ -60,6 +61,10 @@ impl Executor {
                 }
             }
 
+            Action::EmptyTrash => {
+                recycle::empty_trash_bin(&self.data_path, &mut rm_stack);
+            }
+
             Action::Process => {
                 match arg_num {
                     0 => { process::show_user_all_process(&self.user); }
@@ -71,9 +76,12 @@ impl Executor {
                 }
             }
 
-            Action::EmptyTrash => {
-                recycle::empty_trash_bin(&self.data_path, &mut rm_stack);
+            Action::MakeNestedDir => {
+                make_nested_dir(&self.work_path, false);
             }
+
+            Action::SymlinkToLink => {}
+            Action::LinkToSymlink => {}
 
             Action::None => {}
             Action::ILLEGAL => {}

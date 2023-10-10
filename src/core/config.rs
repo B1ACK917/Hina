@@ -4,6 +4,9 @@ pub enum Action {
     Restore,
     EmptyTrash,
     Process,
+    MakeNestedDir,
+    SymlinkToLink,
+    LinkToSymlink,
     None,
     ILLEGAL,
 }
@@ -27,6 +30,9 @@ impl Config {
                 "restore" => { Action::Restore }
                 "et" => { Action::EmptyTrash }
                 "empty-trash" => { Action::EmptyTrash }
+                "mkdir" => { Action::MakeNestedDir }
+                "s2l" => { Action::SymlinkToLink }
+                "l2s" => { Action::LinkToSymlink }
                 "proc" => { Action::Process }
                 _ => { Action::ILLEGAL }
             };
