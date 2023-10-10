@@ -1,4 +1,5 @@
 use std::env;
+
 use once_cell::sync::Lazy;
 
 pub static DEBUG: Lazy<bool> = Lazy::new(|| {
@@ -8,7 +9,7 @@ pub static DEBUG: Lazy<bool> = Lazy::new(|| {
     }
 });
 
-pub static DATA_DIR: &str = ".dark";
+pub static DATA_DIR: &str = ".nijika";
 pub static RM_STACK: &str = "rm.stack";
 pub static RECYCLE: &str = "RecycleBin";
 pub static SPLITTER: &str = "##0x9876$$6789x0##";

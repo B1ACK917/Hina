@@ -1,10 +1,12 @@
-mod core;
-
 use std::env;
 use std::process;
+
 use crate::core::config::Config;
 use crate::core::executor::Executor;
 use crate::core::global::DEBUG;
+
+mod core;
+mod event;
 
 fn main() {
     // Collect args

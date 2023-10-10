@@ -1,11 +1,12 @@
-use crate::core::config::{Action, Config};
-use crate::core::func;
-
 use std::{env, io};
 use std::path::PathBuf;
 use std::process::exit;
-use crate::core::func::remove;
+
+use crate::core::config::{Action, Config};
+use crate::core::func;
 use crate::core::global::DATA_DIR;
+use crate::event::process;
+use crate::event::recycle;
 
 #[derive(Debug, Clone)]
 pub struct Executor {
@@ -43,7 +44,7 @@ impl Executor {
         match self.config.get_action() {
             Action::Remove => {
                 for arg in args {
-                    remove(arg, &self.data_path, &self.work_path, &mut rm_stack);
+                    recycle::remove(arg, &self.data_path, &self.work_path, &mut rm_stack);
                 }
             }
 
@@ -53,7 +54,7 @@ impl Executor {
                     let mut input = String::new();
                     io::stdin().read_line(&mut input).unwrap();
                     let index: i8 = input.trim().parse().unwrap_or(-1);
-                    func::restore(rm_paths, index, &mut rm_stack);
+                    recycle::restore(rm_paths, index, &mut rm_stack);
                 } else {
                     println!("Recycle bin empty.");
                 }
@@ -61,8 +62,8 @@ impl Executor {
 
             Action::Process => {
                 match arg_num {
-                    0 => { func::show_user_all_process(&self.user); }
-                    1 => { func::show_user_spec_process(&self.user, &args[0]) }
+                    0 => { process::show_user_all_process(&self.user); }
+                    1 => { process::show_user_spec_process(&self.user, &args[0]) }
                     _ => {
                         println!("Unexpected args");
                         exit(-1);
@@ -71,7 +72,7 @@ impl Executor {
             }
 
             Action::EmptyTrash => {
-                func::empty_trash_bin(&self.data_path, &mut rm_stack);
+                recycle::empty_trash_bin(&self.data_path, &mut rm_stack);
             }
 
             Action::None => {}
