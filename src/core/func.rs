@@ -26,6 +26,22 @@ pub fn execute_command(input: &String) -> String {
     return output;
 }
 
+pub fn get_execute_target(work_path: &PathBuf, input_path: &PathBuf) -> PathBuf {
+    let target_canon;
+    if input_path.is_absolute() {
+        target_canon = input_path.clone();
+    } else {
+        let mut cur_path = work_path.clone();
+        cur_path.push(&input_path);
+        if cur_path.exists() {
+            target_canon = cur_path.canonicalize().unwrap();
+        } else {
+            target_canon = cur_path;
+        }
+    }
+    return target_canon;
+}
+
 pub fn init_data_dir(data_path: &PathBuf) {
     let mut data_path_ = data_path.clone();
     if !data_path.exists() {

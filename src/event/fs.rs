@@ -37,10 +37,11 @@ fn make_nested_dir_recursive(cur_path: &PathBuf,
 }
 
 pub fn make_nested_dir(work_path: &PathBuf,
+                       input_path: &PathBuf,
                        recursive: bool) {
     let max_depth = if recursive { MAX_RECURSIVE_DEPTH } else { 0 };
-    let cur_path = work_path.clone();
-    make_nested_dir_recursive(&cur_path, 0, max_depth);
+    let target = func::get_execute_target(work_path, input_path);
+    make_nested_dir_recursive(&target, 0, max_depth);
 }
 
 fn symlink_to_link_recursive(cur_path: &PathBuf,
@@ -57,15 +58,16 @@ fn symlink_to_link_recursive(cur_path: &PathBuf,
         } else {
             if filepath.is_symlink() {
                 let file_src = filepath.read_link().unwrap();
+                let file_src_canon = func::get_execute_target(cur_path, &file_src);
                 fs::remove_file(&filepath).unwrap();
-                if file_src.exists() {
-                    fs::hard_link(&file_src, &filepath).unwrap();
+                if file_src_canon.exists() {
+                    fs::hard_link(&file_src_canon, &filepath).unwrap();
                     if *DEBUG {
-                        println!("Hard link {} -> {}", filepath.display(), file_src.display())
+                        println!("Hard link {} -> {}", filepath.display(), file_src_canon.display())
                     }
                 } else {
                     if *DEBUG {
-                        println!("Symbol link source {} doesn't exist", file_src.display())
+                        println!("Symbol link source {} doesn't exist", file_src_canon.display())
                     }
                 }
             }
@@ -74,14 +76,15 @@ fn symlink_to_link_recursive(cur_path: &PathBuf,
 }
 
 pub fn symlink_to_link(work_path: &PathBuf,
+                       input_path: &PathBuf,
                        recursive: bool) {
     let max_depth = if recursive { MAX_RECURSIVE_DEPTH } else { 0 };
-    let cur_path = work_path.clone();
-    symlink_to_link_recursive(&cur_path, 0, max_depth);
+    let target = func::get_execute_target(work_path, input_path);
+    symlink_to_link_recursive(&target, 0, max_depth);
 }
 
 fn link_to_symlink_recursive(cur_path: &PathBuf,
-                             link_src_dir: &PathBuf,
+                             link_src: &PathBuf,
                              cur_depth: i8,
                              max_depth: i8) {
     if cur_depth > max_depth {
@@ -95,7 +98,7 @@ fn link_to_symlink_recursive(cur_path: &PathBuf,
         } else {
             let meta = fs::metadata(&filepath).unwrap();
             let inode = meta.ino();
-            let command = String::from(format!("find {} -inum {}", link_src_dir.display(), inode));
+            let command = String::from(format!("find {} -inum {}", link_src.display(), inode));
             let find_str = func::execute_command(&command);
             let file_src_list: Vec<&str> = find_str.trim().split("\n").collect();
             let mut file_src = "";
@@ -116,9 +119,11 @@ fn link_to_symlink_recursive(cur_path: &PathBuf,
 }
 
 pub fn link_to_symlink(work_path: &PathBuf,
+                       input_path: &PathBuf,
                        link_src_disk: &PathBuf,
                        recursive: bool) {
     let max_depth = if recursive { MAX_RECURSIVE_DEPTH } else { 0 };
-    let cur_path = work_path.clone();
-    link_to_symlink_recursive(&cur_path, link_src_disk, 0, max_depth);
+    let target = func::get_execute_target(work_path, input_path);
+    let link_src = func::get_execute_target(work_path, link_src_disk);
+    link_to_symlink_recursive(&target, &link_src, 0, max_depth);
 }

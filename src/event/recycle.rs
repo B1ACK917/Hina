@@ -5,39 +5,28 @@ use chrono::{DateTime, Local};
 use crate::core::func;
 use crate::core::global::{RAND_STR_LEN, RECYCLE, SPLITTER};
 
-pub fn remove(target: &String,
+pub fn remove(target: &PathBuf,
               data_path: &PathBuf,
               work_path: &PathBuf,
               rm_stack: &mut Vec<String>) {
     let mut recycle = data_path.clone();
     recycle.push(RECYCLE);
-    let rm_target = PathBuf::from(target);
-    let mut file_name: String;
-    let file_path: String;
 
-    if !rm_target.exists() {
+    if !target.exists() {
         return;
     }
 
-    if rm_target.is_absolute() {
-        file_name = String::from(rm_target.file_name().unwrap().to_str().unwrap());
-        file_path = String::from(rm_target.parent().unwrap().to_str().unwrap());
-    } else {
-        let mut cur_path = work_path.clone();
-        cur_path.push(&target);
-        cur_path = cur_path.canonicalize().unwrap();
-        file_path = String::from(cur_path.parent().unwrap().to_str().unwrap());
-        file_name = String::from(cur_path.file_name().unwrap().to_str().unwrap());
-    }
+    let target_canon = func::get_execute_target(&work_path, &target);
+    let mut file_name = String::from(target_canon.file_name().unwrap().to_str().unwrap());
+    let file_path = String::from(target_canon.parent().unwrap().to_str().unwrap());
     file_name += &func::gen_rand_str(RAND_STR_LEN);
     recycle.push(file_name.clone());
 
-
-    let command = String::from(format!("mv {} {}", target, recycle.display()));
+    let command = String::from(format!("mv {} {}", target.display(), recycle.display()));
     func::execute_command(&command);
     let now: DateTime<Local> = Local::now();
     let rm_log = format!("{}{}{}{}{}",
-                         recycle.display().to_string(),
+                         recycle.display(),
                          SPLITTER,
                          file_path,
                          SPLITTER,

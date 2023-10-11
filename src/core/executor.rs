@@ -45,7 +45,8 @@ impl Executor {
         match self.config.get_action() {
             Action::Remove => {
                 for arg in args {
-                    recycle::remove(arg, &self.data_path, &self.work_path, &mut rm_stack);
+                    let target = PathBuf::from(arg);
+                    recycle::remove(&target, &self.data_path, &self.work_path, &mut rm_stack);
                 }
             }
 
@@ -77,24 +78,51 @@ impl Executor {
             }
 
             Action::MakeNestedDir => {
-                fs::make_nested_dir(&self.work_path, false);
+                if args.len() > 0 {
+                    for arg in args {
+                        let target = PathBuf::from(arg);
+                        fs::make_nested_dir(&self.work_path, &target, false);
+                    }
+                } else {
+                    let target = PathBuf::from(".");
+                    fs::make_nested_dir(&self.work_path, &target, false);
+                }
             }
 
             Action::SymlinkToLink => {
-                fs::symlink_to_link(&self.work_path, false);
+                if args.len() > 0 {
+                    for arg in args {
+                        let target = PathBuf::from(arg);
+                        fs::symlink_to_link(&self.work_path, &target, false);
+                    }
+                } else {
+                    let target = PathBuf::from(".");
+                    fs::symlink_to_link(&self.work_path, &target, false);
+                }
             }
 
             Action::LinkToSymlink => {
+                let mut args_ = args.clone();
                 let link_src_dir_str;
 
-                if args.len() > 0 {
-                    link_src_dir_str = args[0].clone();
+                if args_.len() > 0 {
+                    link_src_dir_str = args_[0].clone();
                 } else {
                     link_src_dir_str = String::from("/");
                     println!("No source dir found, finding from /");
                 }
                 let link_src_dir = PathBuf::from(&link_src_dir_str);
-                fs::link_to_symlink(&self.work_path, &link_src_dir, false);
+                args_.remove(0);
+
+                if args_.len() > 0 {
+                    for arg in args_ {
+                        let target = PathBuf::from(arg);
+                        fs::link_to_symlink(&self.work_path, &target, &link_src_dir, false);
+                    }
+                } else {
+                    let target = PathBuf::from(".");
+                    fs::link_to_symlink(&self.work_path, &target, &link_src_dir, false);
+                }
             }
 
             Action::None => {}

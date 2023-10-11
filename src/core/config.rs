@@ -33,7 +33,7 @@ impl Config {
                 "mkndir" => { Action::MakeNestedDir }
                 "s2l" => { Action::SymlinkToLink }
                 "l2s" => { Action::LinkToSymlink }
-                "proc" => { Action::Process }
+                "ps" => { Action::Process }
                 _ => { Action::ILLEGAL }
             };
         }
