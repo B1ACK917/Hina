@@ -102,12 +102,14 @@ fn link_to_symlink_recursive(cur_path: &PathBuf,
             let find_str = func::execute_command(&command);
             let file_src_list: Vec<&str> = find_str.trim().split("\n").collect();
             let mut file_src = "";
-            if file_src_list.len() > 1 {
-                println!("Multiple src found, skip link convert for {}", filepath.display());
-            } else {
+            if file_src_list.len() == 1 {
                 file_src = file_src_list[0];
                 fs::remove_file(&filepath).unwrap();
                 symlink(&file_src, &filepath).unwrap();
+            } else if file_src_list.len() > 1 {
+                println!("Multiple src found, skip link convert for {}", filepath.display());
+            } else {
+                println!("No src found, skip link convert for {}", filepath.display());
             }
             if *DEBUG {
                 println!("{} inode num -> {}", &filepath.display(), inode);
