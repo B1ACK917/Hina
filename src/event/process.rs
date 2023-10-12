@@ -1,8 +1,10 @@
 use std::fs;
+use std::fs::File;
+use std::io::Read;
 use std::path::PathBuf;
 
 use crate::core::func;
-use crate::core::global::DEBUG;
+use crate::core::global::{DEBUG, MEM_EXTRACT_RE};
 
 #[derive(Debug)]
 struct ProcessBlock {
@@ -15,6 +17,24 @@ struct ProcessBlock {
     _time: String,
     cmd: String,
     origin: String,
+}
+
+struct MapMeta {
+    size: u32,
+    rss: u32,
+    pss: u32,
+    swap: u32,
+}
+
+pub struct ProcessMap {
+    start: String,
+    end: String,
+    mode: String,
+    offset: String,
+    device: String,
+    inode: String,
+    name: String,
+    maps: Vec<MapMeta>,
 }
 
 impl ProcessBlock {
@@ -40,6 +60,30 @@ impl ProcessBlock {
             _time: entries[6].clone(),
             cmd,
             origin: String::from(input),
+        };
+    }
+}
+
+impl ProcessMap {
+    pub fn from(smaps: &String) -> ProcessMap {
+        let lines: Vec<&str> = smaps.split("\n").collect();
+        for line in lines {
+            let caps = MEM_EXTRACT_RE.captures(line);
+            if caps.is_some() {
+                let map = caps.unwrap();
+                let name = map["name"].to_string();
+                let amount = map["amount"].to_string();
+            }
+        }
+        return ProcessMap {
+            start: "".to_string(),
+            end: "".to_string(),
+            mode: "".to_string(),
+            offset: "".to_string(),
+            device: "".to_string(),
+            inode: "".to_string(),
+            name: "".to_string(),
+            maps: vec![],
         };
     }
 }
@@ -120,7 +164,27 @@ pub fn dump_proc(user: &String,
     }
 }
 
+pub fn read_mem_detail_from_proc(proc_id: u32) -> Option<ProcessMap> {
+    let proc_file = PathBuf::from(format!("proc/{}/smaps", proc_id));
+    if proc_file.exists() {
+        let mut file = File::open(proc_file).unwrap();
+        let mut contents = String::new();
+        file.read_to_string(&mut contents).unwrap();
+        let process_map = ProcessMap::from(&contents);
+        return Some(process_map);
+    } else {
+        return None;
+    }
+}
+
 pub fn get_proc_mem_detail(user: &String,
                            uid: &String) {
-    _ = (user, uid);
+    let all_process = get_all_process();
+    let user_process: Vec<&ProcessBlock> = all_process
+        .iter()
+        .filter(|x| &x.uid == user || &x.uid == uid)
+        .collect();
+    for process in user_process {
+        read_mem_detail_from_proc(process.pid);
+    }
 }

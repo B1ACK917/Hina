@@ -10,6 +10,7 @@ pub enum Action {
     DumpMemory,
     MemoryDetail,
     None,
+    Test,
     ILLEGAL,
 }
 
@@ -38,6 +39,7 @@ impl Config {
                 "ps" => { Action::Process }
                 "dm" => { Action::DumpMemory }
                 "mem" => { Action::MemoryDetail }
+                "test" => { Action::Test }
                 _ => { Action::ILLEGAL }
             };
         }

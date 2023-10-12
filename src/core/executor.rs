@@ -4,7 +4,7 @@ use std::process::exit;
 
 use crate::core::config::{Action, Config};
 use crate::core::func;
-use crate::core::global::DATA_DIR;
+use crate::core::global::{DATA_DIR, DEBUG};
 use crate::event::fs;
 use crate::event::process;
 use crate::event::recycle;
@@ -141,6 +141,12 @@ impl Executor {
 
             Action::MemoryDetail => {
                 process::get_proc_mem_detail(&self.user, &self.uid);
+            }
+
+            Action::Test => {
+                if *DEBUG {
+                    func::test();
+                }
             }
 
             Action::None => {}

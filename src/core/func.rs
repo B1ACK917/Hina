@@ -10,6 +10,7 @@ use rand::{Rng, thread_rng};
 use rand::distributions::Alphanumeric;
 
 use crate::core::global::{DEBUG, RAND_STR_LEN, RECYCLE, RM_STACK, SPLITTER};
+use crate::event::process;
 
 pub fn get_home() -> String {
     return env::var("HOME").unwrap();
@@ -145,4 +146,8 @@ pub fn gen_rand_str(len: u8) -> String {
         .map(char::from)
         .collect();
     return rand_string;
+}
+
+pub fn test() {
+    process::read_mem_detail_from_proc(226912);
 }
