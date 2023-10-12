@@ -8,11 +8,11 @@ use crate::core::global::DEBUG;
 struct ProcessBlock {
     uid: String,
     pid: u32,
-    ppid: u32,
-    c: u32,
-    stime: String,
-    tty: String,
-    time: String,
+    _ppid: u32,
+    _c: u32,
+    _stime: String,
+    _tty: String,
+    _time: String,
     cmd: String,
     origin: String,
 }
@@ -33,11 +33,11 @@ impl ProcessBlock {
         return ProcessBlock {
             uid: entries[0].clone(),
             pid: entries[1].parse().unwrap(),
-            ppid: entries[2].parse().unwrap(),
-            c: entries[3].parse().unwrap(),
-            stime: entries[4].clone(),
-            tty: entries[5].clone(),
-            time: entries[6].clone(),
+            _ppid: entries[2].parse().unwrap(),
+            _c: entries[3].parse().unwrap(),
+            _stime: entries[4].clone(),
+            _tty: entries[5].clone(),
+            _time: entries[6].clone(),
             cmd,
             origin: String::from(input),
         };
@@ -78,7 +78,7 @@ pub fn show_user_spec_process(user: &String,
     let all_process = get_all_process();
     let user_process: Vec<&ProcessBlock> = all_process
         .iter()
-        .filter(|x| &x.uid == user || &x.uid == uid && x.cmd.contains(process_name))
+        .filter(|x| (&x.uid == user || &x.uid == uid) && x.cmd.contains(process_name))
         .collect();
     println!("{}", get_ps_head());
     for process in user_process {
@@ -122,5 +122,5 @@ pub fn dump_proc(user: &String,
 
 pub fn get_proc_mem_detail(user: &String,
                            uid: &String) {
-    return;
+    _ = (user, uid);
 }
