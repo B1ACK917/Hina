@@ -7,6 +7,8 @@ pub enum Action {
     MakeNestedDir,
     SymlinkToLink,
     LinkToSymlink,
+    DumpMemory,
+    MemoryDetail,
     None,
     ILLEGAL,
 }
@@ -34,6 +36,8 @@ impl Config {
                 "s2l" => { Action::SymlinkToLink }
                 "l2s" => { Action::LinkToSymlink }
                 "ps" => { Action::Process }
+                "dm" => { Action::DumpMemory }
+                "mem" => { Action::MemoryDetail }
                 _ => { Action::ILLEGAL }
             };
         }

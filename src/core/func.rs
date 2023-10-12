@@ -19,6 +19,19 @@ pub fn get_user() -> String {
     return env::var("USER").unwrap();
 }
 
+pub fn get_uid() -> String {
+    let command = format!("id");
+    let output = execute_command(&command);
+    let uid = output
+        .split(" ")
+        .collect::<Vec<&str>>()[0]
+        .split("=")
+        .collect::<Vec<&str>>()[1]
+        .split("(")
+        .collect::<Vec<&str>>()[0].to_string();
+    return uid;
+}
+
 pub fn execute_command(input: &String) -> String {
     let mut command = shell(input);
     command.stdout(Stdio::piped());

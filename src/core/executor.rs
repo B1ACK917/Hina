@@ -15,6 +15,7 @@ pub struct Executor {
     work_path: PathBuf,
     data_path: PathBuf,
     user: String,
+    uid: String,
 }
 
 impl Executor {
@@ -32,6 +33,7 @@ impl Executor {
             work_path,
             data_path,
             user: func::get_user(),
+            uid: func::get_uid(),
         };
     }
 
@@ -68,8 +70,8 @@ impl Executor {
 
             Action::Process => {
                 match arg_num {
-                    0 => { process::show_user_all_process(&self.user); }
-                    1 => { process::show_user_spec_process(&self.user, &args[0]) }
+                    0 => { process::show_user_all_process(&self.user, &self.uid); }
+                    1 => { process::show_user_spec_process(&self.user, &self.uid, &args[0]) }
                     _ => {
                         println!("Unexpected args");
                         exit(-1);
@@ -123,6 +125,22 @@ impl Executor {
                     let target = PathBuf::from(".");
                     fs::link_to_symlink(&self.work_path, &target, &link_src_dir, false);
                 }
+            }
+
+            Action::DumpMemory => {
+                let input;
+                if args.len() > 0 {
+                    input = args[0].clone();
+                } else {
+                    input = String::from("proc");
+                }
+                println!("Dump process detail to {}", input);
+                let target = PathBuf::from(&input);
+                process::dump_proc(&self.user, &self.uid, &self.work_path, &target);
+            }
+
+            Action::MemoryDetail => {
+                process::get_proc_mem_detail(&self.user, &self.uid);
             }
 
             Action::None => {}
