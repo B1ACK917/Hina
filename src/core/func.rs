@@ -65,6 +65,14 @@ pub fn get_execute_target(work_path: &PathBuf, input_path: &PathBuf) -> PathBuf 
     return target_canon;
 }
 
+pub fn parse_args_or(args: &Vec<String>, default: String) -> Vec<String> {
+    return if args.len() > 0 {
+        args.clone()
+    } else {
+        vec![default]
+    };
+}
+
 pub fn init_data_dir(data_path: &PathBuf) {
     let mut data_path_ = data_path.clone();
     if !data_path.exists() {

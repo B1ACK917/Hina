@@ -41,8 +41,21 @@ impl Executor {
         func::init_data_dir(&self.data_path);
 
         let args = self.config.get_args();
+        let flags = self.config.get_flags();
         let arg_num = self.config.arg_num();
         let mut rm_stack = func::load_rm_stack(&self.data_path);
+
+        let recursive = if flags.contains(&"-r".to_string()) {
+            true
+        } else {
+            false
+        };
+
+        let human_readable = if flags.contains(&"-h".to_string()) {
+            true
+        } else {
+            false
+        };
 
         match self.config.get_action() {
             Action::Remove => {
@@ -80,26 +93,18 @@ impl Executor {
             }
 
             Action::MakeNestedDir => {
-                if args.len() > 0 {
-                    for arg in args {
-                        let target = PathBuf::from(arg);
-                        fs::make_nested_dir(&self.work_path, &target, false);
-                    }
-                } else {
-                    let target = PathBuf::from(".");
-                    fs::make_nested_dir(&self.work_path, &target, false);
+                let args_ = func::parse_args_or(args, String::from("."));
+                for arg in &args_ {
+                    let target = PathBuf::from(arg);
+                    fs::make_nested_dir(&self.work_path, &target, recursive);
                 }
             }
 
             Action::SymlinkToLink => {
-                if args.len() > 0 {
-                    for arg in args {
-                        let target = PathBuf::from(arg);
-                        fs::symlink_to_link(&self.work_path, &target, false);
-                    }
-                } else {
-                    let target = PathBuf::from(".");
-                    fs::symlink_to_link(&self.work_path, &target, false);
+                let args_ = func::parse_args_or(args, String::from("."));
+                for arg in &args_ {
+                    let target = PathBuf::from(arg);
+                    fs::symlink_to_link(&self.work_path, &target, recursive);
                 }
             }
 
@@ -116,41 +121,25 @@ impl Executor {
                 let link_src_dir = PathBuf::from(&link_src_dir_str);
                 args_.remove(0);
 
-                if args_.len() > 0 {
-                    for arg in args_ {
-                        let target = PathBuf::from(arg);
-                        fs::link_to_symlink(&self.work_path, &target, &link_src_dir, false);
-                    }
-                } else {
-                    let target = PathBuf::from(".");
-                    fs::link_to_symlink(&self.work_path, &target, &link_src_dir, false);
+                args_ = func::parse_args_or(&args_, String::from("."));
+                for arg in &args_ {
+                    let target = PathBuf::from(arg);
+                    fs::link_to_symlink(&self.work_path, &target, &link_src_dir, recursive);
                 }
             }
 
             Action::DumpMemory => {
-                let input;
-                if args.len() > 0 {
-                    input = args[0].clone();
-                } else {
-                    input = String::from("proc");
+                let args_ = func::parse_args_or(args, String::from("proc"));
+                for arg in &args_ {
+                    println!("Dump process detail to {}", arg);
+                    let target = PathBuf::from(arg);
+                    process::dump_proc(&self.user, &self.uid, &self.work_path, &target);
                 }
-                println!("Dump process detail to {}", input);
-                let target = PathBuf::from(&input);
-                process::dump_proc(&self.user, &self.uid, &self.work_path, &target);
             }
 
             Action::MemoryDetail => {
-                let input;
-                if args.len() > 0 {
-                    input = args[0].clone();
-                } else {
-                    input = String::from("pid");
-                }
-                if args.contains(&"-h".to_string()) {
-                    process::get_proc_mem_detail(&self.user, &self.uid, &input, true);
-                } else {
-                    process::get_proc_mem_detail(&self.user, &self.uid, &input, false);
-                }
+                let args_ = func::parse_args_or(args, String::from("pid"));
+                process::get_proc_mem_detail(&self.user, &self.uid, &args_[0], human_readable);
             }
 
             Action::Test => {

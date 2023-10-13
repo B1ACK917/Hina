@@ -54,7 +54,7 @@ fn symlink_to_link_recursive(cur_path: &PathBuf,
     for entry in cur_path.read_dir().unwrap() {
         let filepath = entry.unwrap().path();
         if filepath.is_dir() {
-            make_nested_dir_recursive(&filepath, cur_depth + 1, max_depth);
+            symlink_to_link_recursive(&filepath, cur_depth + 1, max_depth);
         } else {
             if filepath.is_symlink() {
                 let file_src = filepath.read_link().unwrap();
@@ -94,7 +94,7 @@ fn link_to_symlink_recursive(cur_path: &PathBuf,
     for entry in cur_path.read_dir().unwrap() {
         let filepath = entry.unwrap().path();
         if filepath.is_dir() {
-            make_nested_dir_recursive(&filepath, cur_depth + 1, max_depth);
+            link_to_symlink_recursive(&filepath, link_src, cur_depth + 1, max_depth);
         } else {
             let meta = fs::metadata(&filepath).unwrap();
             let inode = meta.ino();
