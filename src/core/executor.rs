@@ -140,7 +140,17 @@ impl Executor {
             }
 
             Action::MemoryDetail => {
-                process::get_proc_mem_detail(&self.user, &self.uid);
+                let input;
+                if args.len() > 0 {
+                    input = args[0].clone();
+                } else {
+                    input = String::from("pid");
+                }
+                if args.contains(&"-h".to_string()) {
+                    process::get_proc_mem_detail(&self.user, &self.uid, &input, true);
+                } else {
+                    process::get_proc_mem_detail(&self.user, &self.uid, &input, false);
+                }
             }
 
             Action::Test => {

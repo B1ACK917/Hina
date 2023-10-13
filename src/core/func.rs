@@ -164,20 +164,20 @@ pub fn gen_str_width_ctrl(str: &String, width: usize) -> String {
 }
 
 pub fn print_info(head: &Vec<String>,
-                  data: &Vec<Vec<String>>) {
-    let n_element = head.len();
-    let mut max_len: Vec<usize> = vec![0; n_element];
+                  data: &Vec<Vec<String>>,
+                  n_len: usize) {
+    let mut max_len: Vec<usize> = vec![0; n_len];
     for line in data {
-        for i in 0..n_element {
+        for i in 0..n_len {
             max_len[i] = max(max_len[i], line[i].len());
         }
     }
-    for i in 0..n_element {
+    for i in 0..n_len {
         print!("{}  ", gen_str_width_ctrl(&head[i], max_len[i]));
     }
     println!();
     for d in data {
-        for i in 0..n_element {
+        for i in 0..n_len {
             print!("{}  ", gen_str_width_ctrl(&d[i], max_len[i]));
         }
         println!();
@@ -197,14 +197,14 @@ pub fn test() {
     let mut output_list: Vec<Vec<String>> = Vec::new();
     if proc_map_opt.is_some() {
         let proc_map = proc_map_opt.unwrap();
-        let output_info = vec![proc_map.get_total("size").to_string(),
-                               proc_map.get_total("size").to_string(),
-                               proc_map.get_total("size").to_string(),
-                               proc_map.get_total("swap").to_string(),
-                               proc_map.get_total("pss").to_string(),
-                               proc_map.get_total("rss").to_string(),
-                               proc_map.get_total("size").to_string(), ];
+        let output_info = vec![proc_map.get_total_as_kb("size").to_string(),
+                               proc_map.get_total_as_kb("size").to_string(),
+                               proc_map.get_total_as_kb("size").to_string(),
+                               proc_map.get_total_as_kb("swap").to_string(),
+                               proc_map.get_total_as_kb("pss").to_string(),
+                               proc_map.get_total_as_kb("rss").to_string(),
+                               proc_map.get_total_as_kb("size").to_string(), ];
         output_list.push(output_info);
     }
-    print_info(&head, &output_list);
+    print_info(&head, &output_list, 7);
 }

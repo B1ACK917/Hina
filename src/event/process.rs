@@ -116,8 +116,27 @@ impl ProcessMap {
         };
     }
 
-    pub fn get_total(&self, key: &str) -> u64 {
-        return self.total[&key.to_string()];
+    pub fn get_total_as_kb(&self, key: &str) -> String {
+        return format!("{} KB", self.total[&key.to_string()]);
+    }
+
+    pub fn get_total_as_str(&self, key: &str) -> String {
+        return format!("{}", self.total[&key.to_string()]);
+    }
+
+    pub fn get_total_as_human_readable(&self, key: &str) -> String {
+        let mut num = self.total[&key.to_string()] as f64;
+        if num > 1024f64 {
+            num /= 1024.0;
+        } else {
+            return format!("{:.3} KB", num);
+        }
+        if num > 1024f64 {
+            num /= 1024.0;
+        } else {
+            return format!("{:.3} MB", num);
+        }
+        return format!("{:.3} GB", num);
     }
 }
 
@@ -240,7 +259,9 @@ pub fn dump_proc(user: &String,
 }
 
 pub fn get_proc_mem_detail(user: &String,
-                           uid: &String) {
+                           uid: &String,
+                           sort_by: &String,
+                           human_readable: bool) {
     let all_process = get_all_process();
     let user_process: Vec<&ProcessInfo> = all_process
         .iter()
@@ -254,20 +275,54 @@ pub fn get_proc_mem_detail(user: &String,
                     "PSS".to_string(),
                     "RSS".to_string(),
                     "CMD".to_string()];
+    let sort_by_map: HashMap<&str, i32> = HashMap::from([
+        ("pid", 1),
+        ("size", 7),
+        ("swap", 8),
+        ("pss", 9),
+        ("rss", 10),
+    ]);
+    let sort_by_ind = if sort_by_map.contains_key(sort_by.as_str()) {
+        sort_by_map[sort_by.as_str()] as usize
+    } else { 1 };
 
     for proc_info in user_process {
         let proc_map_opt = read_mem_detail_from_proc(proc_info.pid);
         if proc_map_opt.is_some() {
             let proc_map = proc_map_opt.unwrap();
-            let output_info = vec![proc_info.uid.to_string(),
+            let output_info: Vec<String>;
+            if human_readable {
+                output_info = vec![proc_info.uid.to_string(),
                                    proc_info.pid.to_string(),
-                                   proc_map.get_total("size").to_string(),
-                                   proc_map.get_total("swap").to_string(),
-                                   proc_map.get_total("pss").to_string(),
-                                   proc_map.get_total("rss").to_string(),
-                                   proc_info.cmd.to_string()];
+                                   proc_map.get_total_as_human_readable("size"),
+                                   proc_map.get_total_as_human_readable("swap"),
+                                   proc_map.get_total_as_human_readable("pss"),
+                                   proc_map.get_total_as_human_readable("rss"),
+                                   proc_info.cmd.to_string(),
+                                   proc_map.get_total_as_str("size"),
+                                   proc_map.get_total_as_str("swap"),
+                                   proc_map.get_total_as_str("pss"),
+                                   proc_map.get_total_as_str("rss"), ];
+            } else {
+                output_info = vec![proc_info.uid.to_string(),
+                                   proc_info.pid.to_string(),
+                                   proc_map.get_total_as_kb("size"),
+                                   proc_map.get_total_as_kb("swap"),
+                                   proc_map.get_total_as_kb("pss"),
+                                   proc_map.get_total_as_kb("rss"),
+                                   proc_info.cmd.to_string(),
+                                   proc_map.get_total_as_str("size"),
+                                   proc_map.get_total_as_str("swap"),
+                                   proc_map.get_total_as_str("pss"),
+                                   proc_map.get_total_as_str("rss"), ];
+            }
             output_list.push(output_info);
         }
     }
-    print_info(&head, &output_list);
+    output_list.sort_by(|x1, x2| {
+        let x3: u64 = x1[sort_by_ind].parse().unwrap();
+        let x4: u64 = x2[sort_by_ind].parse().unwrap();
+        return x3.partial_cmp(&x4).unwrap();
+    });
+    print_info(&head, &output_list, 7);
 }
