@@ -143,7 +143,7 @@ pub fn show_rm_stack(rm_stack: &Vec<String>) -> Vec<(PathBuf, PathBuf)> {
         paths.push((file.clone(), path.clone()));
         println!("{}: {}\tDelete Time: {}",
                  i,
-                 &record[0][..record[0].len() - (RAND_STR_LEN as usize)],
+                 path.display(),
                  record[2]);
     }
     if *DEBUG {
