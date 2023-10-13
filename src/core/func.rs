@@ -1,3 +1,4 @@
+use std::cmp::max;
 use std::env;
 use std::fs;
 use std::fs::{File, OpenOptions};
@@ -31,6 +32,14 @@ pub fn get_uid() -> String {
         .split("(")
         .collect::<Vec<&str>>()[0].to_string();
     return uid;
+}
+
+pub fn split_and_remove_blank(content: &String, pattern: &str) -> Vec<String> {
+    return content
+        .split(pattern)
+        .map(|s| s.to_string())
+        .filter(|s| !s.is_empty())
+        .collect();
 }
 
 pub fn execute_command(input: &String) -> String {
@@ -83,11 +92,7 @@ pub fn load_rm_stack(data_path: &PathBuf) -> Vec<String> {
     let mut file = File::open(data_path_).unwrap();
     let mut contents = String::new();
     file.read_to_string(&mut contents).unwrap();
-    let rm_stack: Vec<String> = contents
-        .split("\n")
-        .map(|s| s.to_string())
-        .filter(|s| !s.is_empty())
-        .collect();
+    let rm_stack: Vec<String> = split_and_remove_blank(&contents, "\n");
 
     if *DEBUG {
         dbg!(&rm_stack);
@@ -148,6 +153,58 @@ pub fn gen_rand_str(len: u8) -> String {
     return rand_string;
 }
 
+pub fn gen_str_width_ctrl(str: &String, width: usize) -> String {
+    let len = str.len();
+    let mut result = String::new();
+    result += str;
+    if len < width {
+        result += &String::from(" ").repeat(width - len);
+    }
+    return result;
+}
+
+pub fn print_info(head: &Vec<String>,
+                  data: &Vec<Vec<String>>) {
+    let n_element = head.len();
+    let mut max_len: Vec<usize> = vec![0; n_element];
+    for line in data {
+        for i in 0..n_element {
+            max_len[i] = max(max_len[i], line[i].len());
+        }
+    }
+    for i in 0..n_element {
+        print!("{}  ", gen_str_width_ctrl(&head[i], max_len[i]));
+    }
+    println!();
+    for d in data {
+        for i in 0..n_element {
+            print!("{}  ", gen_str_width_ctrl(&d[i], max_len[i]));
+        }
+        println!();
+    }
+}
+
 pub fn test() {
-    process::read_mem_detail_from_proc(226912);
+    let head = vec!["UID".to_string(),
+                    "PID".to_string(),
+                    "SIZE".to_string(),
+                    "SWAP".to_string(),
+                    "PSS".to_string(),
+                    "RSS".to_string(),
+                    "CMD".to_string()];
+    let proc_map_opt = process::read_mem_detail_from_proc(226912);
+    dbg!(&proc_map_opt);
+    let mut output_list: Vec<Vec<String>> = Vec::new();
+    if proc_map_opt.is_some() {
+        let proc_map = proc_map_opt.unwrap();
+        let output_info = vec![proc_map.get_total("size").to_string(),
+                               proc_map.get_total("size").to_string(),
+                               proc_map.get_total("size").to_string(),
+                               proc_map.get_total("swap").to_string(),
+                               proc_map.get_total("pss").to_string(),
+                               proc_map.get_total("rss").to_string(),
+                               proc_map.get_total("size").to_string(), ];
+        output_list.push(output_info);
+    }
+    print_info(&head, &output_list);
 }
