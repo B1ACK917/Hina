@@ -4,6 +4,7 @@ pub enum Action {
     Restore,
     EmptyTrash,
     Process,
+    ProcessAncestor,
     MakeNestedDir,
     SymlinkToLink,
     LinkToSymlink,
@@ -38,6 +39,7 @@ impl Config {
                 "s2l" => { Action::SymlinkToLink }
                 "l2s" => { Action::LinkToSymlink }
                 "ps" => { Action::Process }
+                "pa" => { Action::ProcessAncestor }
                 "dm" => { Action::DumpMemory }
                 "mem" => { Action::MemoryDetail }
                 "test" => { Action::Test }

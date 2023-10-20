@@ -11,15 +11,15 @@ use crate::core::global::{DEBUG, MEM_EXTRACT_RE};
 
 #[derive(Debug, Clone)]
 struct ProcessInfo {
-    uid: String,
-    pid: u32,
+    _uid: String,
+    _pid: u32,
     _ppid: u32,
     _c: u32,
     _stime: String,
     _tty: String,
     _time: String,
-    cmd: String,
-    origin: String,
+    _cmd: String,
+    _origin: String,
 }
 
 #[derive(Debug, Clone)]
@@ -31,14 +31,14 @@ pub struct ProcessMapMeta {
     _device: String,
     _inode: String,
     _name: String,
-    maps: HashMap<String, u32>,
+    _maps: HashMap<String, u32>,
     _cmd: String,
 }
 
 #[derive(Debug, Clone)]
 pub struct ProcessMap {
     _data: Vec<ProcessMapMeta>,
-    total: HashMap<String, u64>,
+    _total: HashMap<String, u64>,
 }
 
 
@@ -56,15 +56,15 @@ impl ProcessInfo {
         }
         cmd = cmd.trim().to_string();
         return ProcessInfo {
-            uid: entries[0].clone(),
-            pid: entries[1].parse().unwrap(),
+            _uid: entries[0].clone(),
+            _pid: entries[1].parse().unwrap(),
             _ppid: entries[2].parse().unwrap(),
             _c: entries[3].parse().unwrap(),
             _stime: entries[4].clone(),
             _tty: entries[5].clone(),
             _time: entries[6].clone(),
-            cmd,
-            origin: String::from(input),
+            _cmd: cmd,
+            _origin: String::from(input),
         };
     }
 }
@@ -93,7 +93,7 @@ impl ProcessMapMeta {
             _device: keys[3].to_string(),
             _inode: keys[4].to_string(),
             _name: name,
-            maps,
+            _maps: maps,
             _cmd: cmdline.replace('\0', " ").trim().to_string(),
         };
     }
@@ -101,31 +101,31 @@ impl ProcessMapMeta {
 
 impl ProcessMap {
     pub fn from(input: Vec<ProcessMapMeta>) -> ProcessMap {
-        let keys = input[0].maps.keys();
+        let keys = input[0]._maps.keys();
         let mut total: HashMap<String, u64> = HashMap::new();
         for key in keys {
             let mut cal: u64 = 0;
             for datum in &input {
-                cal += datum.maps[key] as u64;
+                cal += datum._maps[key] as u64;
             }
             total.insert(key.clone(), cal);
         }
         return ProcessMap {
             _data: input,
-            total,
+            _total: total,
         };
     }
 
     pub fn get_total_as_kb(&self, key: &str) -> String {
-        return format!("{} KB", self.total[&key.to_string()]);
+        return format!("{} KB", self._total[&key.to_string()]);
     }
 
     pub fn get_total_as_str(&self, key: &str) -> String {
-        return format!("{}", self.total[&key.to_string()]);
+        return format!("{}", self._total[&key.to_string()]);
     }
 
     pub fn get_total_as_human_readable(&self, key: &str) -> String {
-        let mut num = self.total[&key.to_string()] as f64;
+        let mut num = self._total[&key.to_string()] as f64;
         if num > 1024f64 {
             num /= 1024.0;
         } else {
@@ -198,15 +198,16 @@ pub fn read_mem_detail_from_proc(proc_id: u32) -> Option<ProcessMap> {
     };
 }
 
+// Below is the function called by Executor
 pub fn show_user_all_process(user: &String, uid: &String) {
     let all_process = get_all_process();
     let user_process: Vec<&ProcessInfo> = all_process
         .iter()
-        .filter(|x| &x.uid == user || &x.uid == uid)
+        .filter(|x| &x._uid == user || &x._uid == uid)
         .collect();
     println!("{}", get_ps_head());
     for process in user_process {
-        println!("{}", process.origin);
+        println!("{}", process._origin);
     }
 }
 
@@ -216,11 +217,36 @@ pub fn show_user_spec_process(user: &String,
     let all_process = get_all_process();
     let user_process: Vec<&ProcessInfo> = all_process
         .iter()
-        .filter(|x| (&x.uid == user || &x.uid == uid) && x.cmd.contains(process_name))
+        .filter(|x| (&x._uid == user || &x._uid == uid) && x._cmd.contains(process_name))
         .collect();
     println!("{}", get_ps_head());
     for process in user_process {
-        println!("{}", process.origin);
+        println!("{}", process._origin);
+    }
+}
+
+pub fn get_process_ancestor(process_id: u32) {
+    let all_process = get_all_process();
+    let mut process_route = HashMap::new();
+    for process in all_process {
+        process_route.insert(process._pid, (process._ppid, process._origin));
+    }
+    if process_route.contains_key(&process_id) {
+        let mut pid = process_id;
+        let mut ppid;
+        let mut ancestors = vec![&process_route[&pid].1];
+        loop {
+            ppid = process_route[&pid].0;
+            if ppid == 0 {
+                break;
+            }
+            pid = ppid;
+            ancestors.push(&process_route[&pid].1);
+        }
+        println!("{}", get_ps_head());
+        for ancestor in ancestors {
+            println!("{}", ancestor);
+        }
     }
 }
 
@@ -241,13 +267,13 @@ pub fn dump_proc(user: &String,
     let all_process = get_all_process();
     let user_process: Vec<&ProcessInfo> = all_process
         .iter()
-        .filter(|x| &x.uid == user || &x.uid == uid)
+        .filter(|x| &x._uid == user || &x._uid == uid)
         .collect();
     if *DEBUG {
         dbg!(&user_process);
     }
     for process in user_process {
-        let pid = &process.pid;
+        let pid = &process._pid;
         target.push(pid.to_string());
         fs::create_dir(&target).unwrap();
         let command = String::from(format!("cat /proc/{}/smaps > {}/smaps", pid, &target.display()));
@@ -265,7 +291,7 @@ pub fn get_proc_mem_detail(user: &String,
     let all_process = get_all_process();
     let user_process: Vec<&ProcessInfo> = all_process
         .iter()
-        .filter(|x| &x.uid == user || &x.uid == uid)
+        .filter(|x| &x._uid == user || &x._uid == uid)
         .collect();
     let mut output_list = Vec::new();
     let head = vec!["UID".to_string(),
@@ -287,30 +313,30 @@ pub fn get_proc_mem_detail(user: &String,
     } else { 1 };
 
     for proc_info in user_process {
-        let proc_map_opt = read_mem_detail_from_proc(proc_info.pid);
+        let proc_map_opt = read_mem_detail_from_proc(proc_info._pid);
         if proc_map_opt.is_some() {
             let proc_map = proc_map_opt.unwrap();
             let output_info: Vec<String>;
             if human_readable {
-                output_info = vec![proc_info.uid.to_string(),
-                                   proc_info.pid.to_string(),
+                output_info = vec![proc_info._uid.to_string(),
+                                   proc_info._pid.to_string(),
                                    proc_map.get_total_as_human_readable("size"),
                                    proc_map.get_total_as_human_readable("swap"),
                                    proc_map.get_total_as_human_readable("pss"),
                                    proc_map.get_total_as_human_readable("rss"),
-                                   proc_info.cmd.to_string(),
+                                   proc_info._cmd.to_string(),
                                    proc_map.get_total_as_str("size"),
                                    proc_map.get_total_as_str("swap"),
                                    proc_map.get_total_as_str("pss"),
                                    proc_map.get_total_as_str("rss"), ];
             } else {
-                output_info = vec![proc_info.uid.to_string(),
-                                   proc_info.pid.to_string(),
+                output_info = vec![proc_info._uid.to_string(),
+                                   proc_info._pid.to_string(),
                                    proc_map.get_total_as_kb("size"),
                                    proc_map.get_total_as_kb("swap"),
                                    proc_map.get_total_as_kb("pss"),
                                    proc_map.get_total_as_kb("rss"),
-                                   proc_info.cmd.to_string(),
+                                   proc_info._cmd.to_string(),
                                    proc_map.get_total_as_str("size"),
                                    proc_map.get_total_as_str("swap"),
                                    proc_map.get_total_as_str("pss"),

@@ -92,6 +92,14 @@ impl Executor {
                 }
             }
 
+            Action::ProcessAncestor => {
+                if arg_num > 0 {
+                    for arg in args {
+                        process::get_process_ancestor(arg.parse().unwrap_or(1));
+                    }
+                }
+            }
+
             Action::MakeNestedDir => {
                 let args_ = func::parse_args_or(args, String::from("."));
                 for arg in &args_ {

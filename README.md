@@ -38,7 +38,7 @@ This will clone the git repo to your machine.
 
 Then the build script will running and compile the Hina binary file, you can find the file in current directory, which named `hina`.
 
-![image-20231013222653263](./asset/image-20231013222653263.jpg)
+![image-20231013222653263](https://raw.githubusercontent.com/B1ACK917/img_asset/main/image-20231013222653263.jpg)
 
 `sudo mv hina /usr/bin`
 
@@ -52,11 +52,11 @@ Although htop or top can easily check how much memory is used by each process an
 
 Hina provides the ability to view **detailed memory usage** of each process, including **Size, Swap, RSS, PSS** and other information, and can be sorted by specified fields.
 
-![image-20231013213858318](./asset/image-20231013213858318.jpg)
+![image-20231013213858318](https://raw.githubusercontent.com/B1ACK917/img_asset/main/image-20231013213858318.jpg)
 
 The `-h` parameter can make the usage **human-readable**, and swap specifies the sorting field as swap, sorting from low to high.
 
-![image-20231013213928815](./asset/image-20231013213928815.jpg)
+![image-20231013213928815](https://raw.githubusercontent.com/B1ACK917/img_asset/main/image-20231013213928815.jpg)
 
 
 
@@ -70,19 +70,19 @@ A recycle bin system managed by Hina, using `rm` to delete files or directories 
 
 **Remove**:
 
-![image-20231013213101438](./asset/image-20231013213101438.jpg)
+![image-20231013213101438](https://raw.githubusercontent.com/B1ACK917/img_asset/main/image-20231013213101438.jpg)
 
 **Restore**:
 
-![image-20231013213136108](./asset/image-20231013213136108.jpg)
+![image-20231013213136108](https://raw.githubusercontent.com/B1ACK917/img_asset/main/image-20231013213136108.jpg)
 
 Hina will distinguish deleted files or directories by **adding a 16-digit random string**, so there is no need to worry about conflicts caused by deleting two files with the same name.
 
-![image-20231013213351691](./asset/image-20231013213351691.jpg)
+![image-20231013213351691](https://raw.githubusercontent.com/B1ACK917/img_asset/main/image-20231013213351691.jpg)
 
 Use `hina et` to empty the recycle bin.
 
-![image-20231013214446956](./asset/image-20231013214446956.jpg)
+![image-20231013214446956](https://raw.githubusercontent.com/B1ACK917/img_asset/main/image-20231013214446956.jpg)
 
 
 
@@ -94,11 +94,11 @@ This function is similar to ps, but only lists the processes belonging to this u
 
 `ps -ef | grep $USER` listed processes that are not created by the user:
 
-![ps lists processes not created by $USER](./asset/image-20231013214122143.jpg)
+![ps lists processes not created by $USER](https://raw.githubusercontent.com/B1ACK917/img_asset/main/image-20231013214122143.jpg)
 
 `hina ps ` will filter out those:
 
-![hina filtered ps](./asset/image-20231013214155554.jpg)
+![hina filtered ps](https://raw.githubusercontent.com/B1ACK917/img_asset/main/image-20231013214155554.jpg)
 
 
 
@@ -108,11 +108,11 @@ Hina provides **conversion** between **symbolic links** and **hard links**.
 
 ### Symlink to Hardlink
 
-![image-20231013214819810](./asset/image-20231013214819810.jpg)
+![image-20231013214819810](https://raw.githubusercontent.com/B1ACK917/img_asset/main/image-20231013214819810.jpg)
 
 Hina will **recursively** traverse the folder, resolve all symbolic links, hard-link the source files to the target, and **delete expired symbolic links.**
 
-![image-20231013214853699](./asset/image-20231013214853699.jpg)
+![image-20231013214853699](https://raw.githubusercontent.com/B1ACK917/img_asset/main/image-20231013214853699.jpg)
 
 
 
@@ -120,4 +120,12 @@ Hina will **recursively** traverse the folder, resolve all symbolic links, hard-
 
 For this reverse operation, **parsing the hard-linked source file requires querying the file with the same inode through the inode, so the l2s command requires a source file root directory** (this directory can be left blank, which means searching for the source file from the root directory `/`, But it will be very time-consuming).
 
-![image-20231013215121225](./asset/image-20231013215121225.jpg)
+![image-20231013215121225](https://raw.githubusercontent.com/B1ACK917/img_asset/main/image-20231013215121225.jpg)
+
+
+
+## Process ancestors
+
+Use "pa" to list a process's all ancestors.
+
+![image-20231020223912023](https://raw.githubusercontent.com/B1ACK917/img_asset/main/image-20231020223912023.jpg)
