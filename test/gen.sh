@@ -1,5 +1,6 @@
 rm -rf testmkdir
 rm -rf testsym
+rm -rf testrn
 
 mkdir testmkdir
 cd testmkdir || exit
@@ -24,3 +25,8 @@ ln -s ../../testmkdir/test2.mkv testsym/recursive
 ln -s ../../testmkdir/test3.avi testsym/recursive
 ln -s ../../testmkdir/test4.txt testsym/recursive
 ln -s ../../testmkdir/test.fail testsym/recursive
+
+mkdir testrn
+mkdir testrn/recursive
+touch testrn/abcSTHcdeELSEfgh.txt
+touch testrn/recursive/abcSTHcdeELSEfgh.txt

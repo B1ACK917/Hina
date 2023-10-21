@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 #[derive(Debug, Clone)]
 pub enum Action {
     Remove,
@@ -8,6 +10,7 @@ pub enum Action {
     MakeNestedDir,
     SymlinkToLink,
     LinkToSymlink,
+    Rename,
     DumpMemory,
     MemoryDetail,
     None,
@@ -19,10 +22,19 @@ pub enum Action {
 pub struct Config {
     action: Action,
     args: Vec<String>,
-    flags: Vec<String>,
+    flags: HashMap<String, String>,
 }
 
 impl Config {
+    pub fn add_flag(input: &String, map: &mut HashMap<String, String>) {
+        if input.contains("=") {
+            let entries: Vec<&str> = input.split("=").collect();
+            map.insert(entries[0][1..].to_string(), entries[1].to_string());
+        } else {
+            map.insert(input[1..].to_string(), "".to_string());
+        }
+    }
+
     pub fn build(input: &[String]) -> Result<Config, &'static str> {
         let action_: Action;
         if input.len() < 2 {
@@ -38,6 +50,7 @@ impl Config {
                 "mkndir" => { Action::MakeNestedDir }
                 "s2l" => { Action::SymlinkToLink }
                 "l2s" => { Action::LinkToSymlink }
+                "rn" => { Action::Rename }
                 "ps" => { Action::Process }
                 "pa" => { Action::ProcessAncestor }
                 "dm" => { Action::DumpMemory }
@@ -73,7 +86,7 @@ impl Config {
         return &self.args;
     }
 
-    pub fn get_flags(&self) -> &Vec<String> {
+    pub fn get_flags(&self) -> &HashMap<String, String> {
         return &self.flags;
     }
 
@@ -81,12 +94,12 @@ impl Config {
         return self.args.len() as u8;
     }
 
-    fn parse_flag_and_arg(input: &mut Vec<String>) -> (Vec<String>, Vec<String>) {
-        let mut flags = Vec::new();
+    fn parse_flag_and_arg(input: &mut Vec<String>) -> (HashMap<String, String>, Vec<String>) {
+        let mut flags: HashMap<String, String> = HashMap::new();
         let mut args = Vec::new();
         let _: Vec<_> = input.iter().map(
             |x| {
-                if x.starts_with("-") { flags.push(x.clone()) } else { args.push(x.clone()) }
+                if x.starts_with("-") { Config::add_flag(x, &mut flags) } else { args.push(x.clone()) }
             }
         ).collect();
         return (flags, args);

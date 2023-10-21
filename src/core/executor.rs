@@ -45,16 +45,28 @@ impl Executor {
         let arg_num = self.config.arg_num();
         let mut rm_stack = func::load_rm_stack(&self.data_path);
 
-        let recursive = if flags.contains(&"-r".to_string()) {
+        let recursive = if flags.contains_key("r") {
             true
         } else {
             false
         };
 
-        let human_readable = if flags.contains(&"-h".to_string()) {
+        let human_readable = if flags.contains_key("h") {
             true
         } else {
             false
+        };
+
+        let input = if flags.contains_key("i") {
+            flags["i"].clone()
+        } else {
+            String::new()
+        };
+
+        let output = if flags.contains_key("o") {
+            flags["o"].clone()
+        } else {
+            String::new()
         };
 
         match self.config.get_action() {
@@ -133,6 +145,14 @@ impl Executor {
                 for arg in &args_ {
                     let target = PathBuf::from(arg);
                     fs::link_to_symlink(&self.work_path, &target, &link_src_dir, recursive);
+                }
+            }
+
+            Action::Rename => {
+                let args_ = func::parse_args_or(args, String::from("."));
+                for arg in &args_ {
+                    let target = PathBuf::from(arg);
+                    fs::rename(&self.work_path, &target, &input, &output, recursive);
                 }
             }
 

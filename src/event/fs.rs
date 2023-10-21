@@ -129,3 +129,39 @@ pub fn link_to_symlink(work_path: &PathBuf,
     let link_src = func::get_execute_target(work_path, link_src_disk);
     link_to_symlink_recursive(&target, &link_src, 0, max_depth);
 }
+
+pub fn rename_recursive(cur_path: &PathBuf,
+                        in_str: &String,
+                        out_str: &String,
+                        cur_depth: i8,
+                        max_depth: i8) {
+    if cur_depth > max_depth {
+        return;
+    }
+
+    for entry in cur_path.read_dir().unwrap() {
+        let filepath = entry.unwrap().path();
+        if filepath.is_dir() {
+            rename_recursive(&filepath, in_str, out_str, cur_depth + 1, max_depth);
+        } else {
+            let filename = filepath.file_name().unwrap().to_str().unwrap();
+            let mut new_path = filepath.parent().unwrap().to_path_buf();
+            if filename.contains(in_str) {
+                let new_filename = filename.replace(in_str, out_str);
+                new_path.push(new_filename);
+                fs::rename(&filepath, &new_path).unwrap();
+                println!("{} -> {}", &filepath.display(), &new_path.display())
+            }
+        }
+    }
+}
+
+pub fn rename(work_path: &PathBuf,
+              input_path: &PathBuf,
+              in_str: &String,
+              out_str: &String,
+              recursive: bool) {
+    let max_depth = if recursive { MAX_RECURSIVE_DEPTH } else { 0 };
+    let target = func::get_execute_target(work_path, input_path);
+    rename_recursive(&target, in_str, out_str, 0, max_depth);
+}
