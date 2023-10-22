@@ -133,6 +133,8 @@ pub fn link_to_symlink(work_path: &PathBuf,
 pub fn rename_recursive(cur_path: &PathBuf,
                         in_str: &String,
                         out_str: &String,
+                        append_str: &String,
+                        num: usize,
                         cur_depth: i8,
                         max_depth: i8) {
     if cur_depth > max_depth {
@@ -142,15 +144,26 @@ pub fn rename_recursive(cur_path: &PathBuf,
     for entry in cur_path.read_dir().unwrap() {
         let filepath = entry.unwrap().path();
         if filepath.is_dir() {
-            rename_recursive(&filepath, in_str, out_str, cur_depth + 1, max_depth);
+            rename_recursive(
+                &filepath,
+                in_str,
+                out_str,
+                append_str,
+                num,
+                cur_depth + 1,
+                max_depth,
+            );
         } else {
             let filename = filepath.file_name().unwrap().to_str().unwrap();
             let mut new_path = filepath.parent().unwrap().to_path_buf();
             if filename.contains(in_str) {
-                let new_filename = filename.replace(in_str, out_str);
-                new_path.push(new_filename);
-                fs::rename(&filepath, &new_path).unwrap();
-                println!("{} -> {}", &filepath.display(), &new_path.display())
+                let mut new_filename = filename.replacen(in_str, out_str, 1);
+                new_filename.insert_str(num, append_str);
+                if new_filename != filename {
+                    new_path.push(new_filename);
+                    fs::rename(&filepath, &new_path).unwrap();
+                    println!("{} -> {}", &filepath.display(), &new_path.display())
+                }
             }
         }
     }
@@ -160,8 +173,10 @@ pub fn rename(work_path: &PathBuf,
               input_path: &PathBuf,
               in_str: &String,
               out_str: &String,
+              append_str: &String,
+              num: usize,
               recursive: bool) {
     let max_depth = if recursive { MAX_RECURSIVE_DEPTH } else { 0 };
     let target = func::get_execute_target(work_path, input_path);
-    rename_recursive(&target, in_str, out_str, 0, max_depth);
+    rename_recursive(&target, in_str, out_str, append_str, num, 0, max_depth);
 }

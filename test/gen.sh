@@ -28,5 +28,13 @@ ln -s ../../testmkdir/test.fail testsym/recursive
 
 mkdir testrn
 mkdir testrn/recursive
-touch testrn/abcSTHcdeELSEfgh.txt
-touch testrn/recursive/abcSTHcdeELSEfgh.txt
+touch testrn/abcTEST1.txt
+touch testrn/TabcEST2.txt
+touch testrn/TEabcST3.txt
+touch testrn/TESabcT4.txt
+touch testrn/TESTabc5.txt
+touch testrn/recursive/abcTEST1.txt
+touch testrn/recursive/TabcEST2.txt
+touch testrn/recursive/TEabcST3.txt
+touch testrn/recursive/TESabcT4.txt
+touch testrn/recursive/TESTabc5.txt

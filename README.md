@@ -46,7 +46,27 @@ Move Hina to the bin file directory, then you can type hina in everywhere.
 
 
 
-## Detailed process memory usage
+## Execution Flags
+
+`-r` for **recursively** run the command if supported. **Default false.**
+
+`-h` for translate the output to **human-readable**. e.g. `10240 KB` will be translate to `10 MB`. **Default false.**
+
+`-i` for **input** if the command can receive an input parameter. **Default empty string**
+
+`-o` for **output** if the command can receive an output parameter. **Default empty string**
+
+`-a` for **append** if the command can receive an append parameter. **Default empty string**
+
+`-n` for **num** if the command can receive a num parameter. **Default 0**
+
+
+
+## Process Functions
+
+### Detailed process memory usage
+
+**Support flags: `-h`**
 
 Although htop or top can easily check how much memory is used by each process and the usage of swap, if you want to check how much swap is used by each process, they are unable to do anything.
 
@@ -57,6 +77,30 @@ Hina provides the ability to view **detailed memory usage** of each process, inc
 The `-h` parameter can make the usage **human-readable**, and swap specifies the sorting field as swap, sorting from low to high.
 
 ![image-20231013213928815](https://raw.githubusercontent.com/B1ACK917/img_asset/main/image-20231013213928815.jpg)
+
+
+
+### Process ancestors
+
+Use "pa" to list a process's all ancestors.
+
+![image-20231020223912023](https://raw.githubusercontent.com/B1ACK917/img_asset/main/image-20231020223912023.jpg)
+
+
+
+### Process filtering
+
+This function is similar to ps, but only lists the processes belonging to this user. Compared with `ps -ef | grep $USER`, it can filter out processes run by other users, but the command contains `$USER`, such as other users running some of the programs and it includes some files in your directory. These programs will be listed by `ps -ef | grep $USER`, but `hina ps` will only list processes created by `$USER`.
+
+`ps -ef | grep $USER` listed processes that are not created by the user:
+
+![ps lists processes not created by $USER](https://raw.githubusercontent.com/B1ACK917/img_asset/main/image-20231013214122143.jpg)
+
+`hina ps ` will filter out those:
+
+![hina filtered ps](https://raw.githubusercontent.com/B1ACK917/img_asset/main/image-20231013214155554.jpg)
+
+
 
 
 
@@ -86,27 +130,15 @@ Use `hina et` to empty the recycle bin.
 
 
 
-## Process filtering
+## Filesystem Functions
 
-This function is similar to ps, but only lists the processes belonging to this user. Compared with `ps -ef | grep $USER`, it can filter out processes run by other users, but the command contains `$USER`, such as other users running some of the programs and it includes some files in your directory. These programs will be listed by `ps -ef | grep $USER`, but `hina ps` will only list processes created by `$USER`.
-
-
-
-`ps -ef | grep $USER` listed processes that are not created by the user:
-
-![ps lists processes not created by $USER](https://raw.githubusercontent.com/B1ACK917/img_asset/main/image-20231013214122143.jpg)
-
-`hina ps ` will filter out those:
-
-![hina filtered ps](https://raw.githubusercontent.com/B1ACK917/img_asset/main/image-20231013214155554.jpg)
-
-
-
-## Symlink & Hardlink conversion
+### Symlink & Hardlink conversion
 
 Hina provides **conversion** between **symbolic links** and **hard links**.
 
-### Symlink to Hardlink
+#### Symlink to Hardlink
+
+**Support flags: `-r`**
 
 ![image-20231013214819810](https://raw.githubusercontent.com/B1ACK917/img_asset/main/image-20231013214819810.jpg)
 
@@ -116,7 +148,9 @@ Hina will **recursively** traverse the folder, resolve all symbolic links, hard-
 
 
 
-## Hardlink to Symlink
+#### Hardlink to Symlink
+
+**Support flags: `-r`**
 
 For this reverse operation, **parsing the hard-linked source file requires querying the file with the same inode through the inode, so the l2s command requires a source file root directory** (this directory can be left blank, which means searching for the source file from the root directory `/`, But it will be very time-consuming).
 
@@ -124,8 +158,38 @@ For this reverse operation, **parsing the hard-linked source file requires query
 
 
 
-## Process ancestors
+### Make nested directory
 
-Use "pa" to list a process's all ancestors.
+**Support flags: `-r`**
 
-![image-20231020223912023](https://raw.githubusercontent.com/B1ACK917/img_asset/main/image-20231020223912023.jpg)
+`mkndir` will generate the directory for each file using its filename without extension
+
+![image-20231022223118828](https://raw.githubusercontent.com/B1ACK917/img_asset/main/image-20231022223118828.jpg)
+
+Here is a sample that some dirs have some file, then execute `hina mkndir -r` with recursive option.
+
+![image-20231022223212585](https://raw.githubusercontent.com/B1ACK917/img_asset/main/image-20231022223212585.jpg)
+
+
+
+### Batch Renaming
+
+**Support flags: `-r,-i,-o,-a,-n`**
+
+Use `rn` to perform batch renaming if you have a large number of files that need to be renamed in the same pattern.
+
+Now we have some files TEST.txt, but the strange string abc appears in different places in the file name.
+
+![image-20231022225118647](https://raw.githubusercontent.com/B1ACK917/img_asset/main/image-20231022225118647.jpg)
+
+With Hina renaming function, we can easily remove the "abc" from the filename.
+
+![image-20231022225214669](https://raw.githubusercontent.com/B1ACK917/img_asset/main/image-20231022225214669.jpg)
+
+With the `-a` parameter, we can add some pattern in the filename, such as adding "HINA" to every file.
+
+![image-20231022225430691](https://raw.githubusercontent.com/B1ACK917/img_asset/main/image-20231022225430691.jpg)
+
+Also, the `-n` parameters allows adding pattern to specific position, such as this time we can add "HINA" after "TEST".
+
+![image-20231022225522741](https://raw.githubusercontent.com/B1ACK917/img_asset/main/image-20231022225522741.jpg)

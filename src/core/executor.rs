@@ -1,4 +1,5 @@
 use std::{env, io};
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::process::exit;
 
@@ -16,35 +17,21 @@ pub struct Executor {
     data_path: PathBuf,
     user: String,
     uid: String,
+    flags: ExecFlag,
+}
+
+#[derive(Debug, Clone)]
+pub struct ExecFlag {
+    recursive: bool,
+    human_readable: bool,
+    input: String,
+    output: String,
+    append: String,
+    num: usize,
 }
 
 impl Executor {
-    pub fn build(config: Config) -> Executor {
-        let work_path_str = env::current_dir().unwrap().display().to_string();
-        let home_path_str = func::get_home();
-
-        let work_path = PathBuf::from(work_path_str);
-        let home_path = PathBuf::from(home_path_str);
-        let mut data_path = home_path;
-        data_path.push(DATA_DIR);
-
-        return Executor {
-            config,
-            work_path,
-            data_path,
-            user: func::get_user(),
-            uid: func::get_uid(),
-        };
-    }
-
-    pub fn run(&self) {
-        func::init_data_dir(&self.data_path);
-
-        let args = self.config.get_args();
-        let flags = self.config.get_flags();
-        let arg_num = self.config.arg_num();
-        let mut rm_stack = func::load_rm_stack(&self.data_path);
-
+    fn parse_flag(flags: &HashMap<String, String>) -> ExecFlag {
         let recursive = if flags.contains_key("r") {
             true
         } else {
@@ -69,11 +56,67 @@ impl Executor {
             String::new()
         };
 
+        let append = if flags.contains_key("a") {
+            flags["a"].clone()
+        } else {
+            String::new()
+        };
+
+        let num: usize = if flags.contains_key("n") {
+            flags["n"].clone().parse().unwrap_or(0)
+        } else {
+            0
+        };
+
+        return ExecFlag {
+            recursive,
+            human_readable,
+            input,
+            output,
+            append,
+            num,
+        };
+    }
+
+    pub(crate) fn build(config: Config) -> Executor {
+        let work_path_str = env::current_dir().unwrap().display().to_string();
+        let home_path_str = func::get_home();
+
+        let work_path = PathBuf::from(work_path_str);
+        let home_path = PathBuf::from(home_path_str);
+        let mut data_path = home_path;
+        data_path.push(DATA_DIR);
+
+        let flags = Executor::parse_flag(config.get_flags());
+
+        return Executor {
+            config,
+            work_path,
+            data_path,
+            user: func::get_user(),
+            uid: func::get_uid(),
+            flags,
+        };
+    }
+
+    pub fn run(&self) {
+        func::init_data_dir(&self.data_path);
+
+        let args = self.config.get_args();
+        let arg_num = self.config.arg_num();
+        let mut rm_stack = func::load_rm_stack(&self.data_path);
+
+
         match self.config.get_action() {
             Action::Remove => {
                 for arg in args {
                     let target = PathBuf::from(arg);
-                    recycle::remove(&target, &self.data_path, &self.work_path, &mut rm_stack);
+                    recycle::remove(
+                        &target,
+                        &self.data_path,
+                        &self.work_path,
+                        &mut rm_stack,
+                    );
                 }
             }
 
@@ -83,20 +126,38 @@ impl Executor {
                     let mut input = String::new();
                     io::stdin().read_line(&mut input).unwrap();
                     let index: i8 = input.trim().parse().unwrap_or(-1);
-                    recycle::restore(rm_paths, index, &mut rm_stack);
+                    recycle::restore(
+                        rm_paths,
+                        index,
+                        &mut rm_stack,
+                    );
                 } else {
                     println!("Recycle bin empty.");
                 }
             }
 
             Action::EmptyTrash => {
-                recycle::empty_trash_bin(&self.data_path, &mut rm_stack);
+                recycle::empty_trash_bin(
+                    &self.data_path,
+                    &mut rm_stack,
+                );
             }
 
             Action::Process => {
                 match arg_num {
-                    0 => { process::show_user_all_process(&self.user, &self.uid); }
-                    1 => { process::show_user_spec_process(&self.user, &self.uid, &args[0]) }
+                    0 => {
+                        process::show_user_all_process(
+                            &self.user,
+                            &self.uid,
+                        );
+                    }
+                    1 => {
+                        process::show_user_spec_process(
+                            &self.user,
+                            &self.uid,
+                            &args[0],
+                        )
+                    }
                     _ => {
                         println!("Unexpected args");
                         exit(-1);
@@ -116,7 +177,11 @@ impl Executor {
                 let args_ = func::parse_args_or(args, String::from("."));
                 for arg in &args_ {
                     let target = PathBuf::from(arg);
-                    fs::make_nested_dir(&self.work_path, &target, recursive);
+                    fs::make_nested_dir(
+                        &self.work_path,
+                        &target,
+                        self.flags.recursive,
+                    );
                 }
             }
 
@@ -124,7 +189,11 @@ impl Executor {
                 let args_ = func::parse_args_or(args, String::from("."));
                 for arg in &args_ {
                     let target = PathBuf::from(arg);
-                    fs::symlink_to_link(&self.work_path, &target, recursive);
+                    fs::symlink_to_link(
+                        &self.work_path,
+                        &target,
+                        self.flags.recursive,
+                    );
                 }
             }
 
@@ -144,7 +213,12 @@ impl Executor {
                 args_ = func::parse_args_or(&args_, String::from("."));
                 for arg in &args_ {
                     let target = PathBuf::from(arg);
-                    fs::link_to_symlink(&self.work_path, &target, &link_src_dir, recursive);
+                    fs::link_to_symlink(
+                        &self.work_path,
+                        &target,
+                        &link_src_dir,
+                        self.flags.recursive,
+                    );
                 }
             }
 
@@ -152,7 +226,15 @@ impl Executor {
                 let args_ = func::parse_args_or(args, String::from("."));
                 for arg in &args_ {
                     let target = PathBuf::from(arg);
-                    fs::rename(&self.work_path, &target, &input, &output, recursive);
+                    fs::rename(
+                        &self.work_path,
+                        &target,
+                        &self.flags.input,
+                        &self.flags.output,
+                        &self.flags.append,
+                        self.flags.num,
+                        self.flags.recursive,
+                    );
                 }
             }
 
@@ -161,13 +243,23 @@ impl Executor {
                 for arg in &args_ {
                     println!("Dump process detail to {}", arg);
                     let target = PathBuf::from(arg);
-                    process::dump_proc(&self.user, &self.uid, &self.work_path, &target);
+                    process::dump_proc(
+                        &self.user,
+                        &self.uid,
+                        &self.work_path,
+                        &target,
+                    );
                 }
             }
 
             Action::MemoryDetail => {
                 let args_ = func::parse_args_or(args, String::from("pid"));
-                process::get_proc_mem_detail(&self.user, &self.uid, &args_[0], human_readable);
+                process::get_proc_mem_detail(
+                    &self.user,
+                    &self.uid,
+                    &args_[0],
+                    self.flags.human_readable,
+                );
             }
 
             Action::Test => {
