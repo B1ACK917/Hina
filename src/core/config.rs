@@ -11,6 +11,7 @@ pub enum Action {
     SymlinkToLink,
     LinkToSymlink,
     Rename,
+    RenameSym,
     DumpMemory,
     MemoryDetail,
     None,
@@ -51,6 +52,7 @@ impl Config {
                 "s2l" => { Action::SymlinkToLink }
                 "l2s" => { Action::LinkToSymlink }
                 "rn" => { Action::Rename }
+                "rnsym" => { Action::RenameSym }
                 "ps" => { Action::Process }
                 "pa" => { Action::ProcessAncestor }
                 "dm" => { Action::DumpMemory }

@@ -238,6 +238,22 @@ impl Executor {
                 }
             }
 
+            Action::RenameSym => {
+                let args_ = func::parse_args_or(args, String::from("."));
+                for arg in &args_ {
+                    let target = PathBuf::from(arg);
+                    fs::rename_symbol_link(
+                        &self.work_path,
+                        &target,
+                        &self.flags.input,
+                        &self.flags.output,
+                        &self.flags.append,
+                        self.flags.num,
+                        self.flags.recursive,
+                    );
+                }
+            }
+
             Action::DumpMemory => {
                 let args_ = func::parse_args_or(args, String::from("proc"));
                 for arg in &args_ {

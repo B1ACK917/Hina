@@ -180,3 +180,54 @@ pub fn rename(work_path: &PathBuf,
     let target = func::get_execute_target(work_path, input_path);
     rename_recursive(&target, in_str, out_str, append_str, num, 0, max_depth);
 }
+
+pub fn rename_symbol_link_recursive(cur_path: &PathBuf,
+                                    in_str: &String,
+                                    out_str: &String,
+                                    append_str: &String,
+                                    num: usize,
+                                    cur_depth: i8,
+                                    max_depth: i8) {
+    if cur_depth > max_depth {
+        return;
+    }
+
+    for entry in cur_path.read_dir().unwrap() {
+        let filepath = entry.unwrap().path();
+        if filepath.is_dir() {
+            rename_symbol_link_recursive(
+                &filepath,
+                in_str,
+                out_str,
+                append_str,
+                num,
+                cur_depth + 1,
+                max_depth,
+            );
+        } else {
+            let src = filepath.read_link().unwrap();
+            let file_src = src.to_str().unwrap();
+            if file_src.contains(in_str) {
+                let mut new_file_src = file_src.replacen(in_str, out_str, 1);
+                new_file_src.insert_str(num, append_str);
+                fs::remove_file(&filepath).unwrap();
+                symlink(&new_file_src, &filepath).unwrap();
+                if *DEBUG {
+                    println!("Symbol link {} -> {}", filepath.display(), new_file_src)
+                }
+            }
+        }
+    }
+}
+
+pub fn rename_symbol_link(work_path: &PathBuf,
+                          input_path: &PathBuf,
+                          in_str: &String,
+                          out_str: &String,
+                          append_str: &String,
+                          num: usize,
+                          recursive: bool) {
+    let max_depth = if recursive { MAX_RECURSIVE_DEPTH } else { 0 };
+    let target = func::get_execute_target(work_path, input_path);
+    rename_symbol_link_recursive(&target, in_str, out_str, append_str, num, 0, max_depth);
+}
