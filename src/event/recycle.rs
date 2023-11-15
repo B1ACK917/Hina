@@ -2,36 +2,62 @@ use std::path::PathBuf;
 
 use chrono::{DateTime, Local};
 
+use crate::core::error::HinaError;
+use crate::core::executor::ExecFlag;
 use crate::core::func;
 use crate::core::global::{RAND_STR_LEN, RECYCLE, SPLITTER};
+use crate::event::base::HinaModuleRun;
 
-pub fn remove(target: &PathBuf,
-              data_path: &PathBuf,
-              work_path: &PathBuf,
-              rm_stack: &mut Vec<String>) {
-    let mut recycle = data_path.clone();
-    recycle.push(RECYCLE);
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct Remove;
 
-    if !target.exists() {
-        return;
+impl HinaModuleRun for Remove {
+    fn run(&self,
+           _work_path: &PathBuf,
+           _data_path: &PathBuf,
+           _recycle_path: &PathBuf,
+           _user: &String,
+           _uid: &String,
+           _flags: &ExecFlag,
+           _rm_stack: &mut Vec<String>,
+           _target: &PathBuf,
+    ) -> Result<(), HinaError> {
+        let mut recycle_bin = _recycle_path.clone();
+        let mut file_name = String::from(_target.file_name().unwrap().to_str().unwrap());
+        let file_path = String::from(_target.parent().unwrap().to_str().unwrap());
+        file_name += &func::gen_rand_str(RAND_STR_LEN);
+        recycle_bin.push(file_name.clone());
+
+        let command = String::from(format!("mv \"{}\" \"{}\"", _target.display(), recycle_bin.display()));
+        func::execute_command(&command)?;
+        let now: DateTime<Local> = Local::now();
+        let rm_log = format!("{}{}{}{}{}",
+                             recycle_bin.display(),
+                             SPLITTER,
+                             file_path,
+                             SPLITTER,
+                             now.format("%Y-%m-%d %H:%M:%S%.3f"));
+        _rm_stack.push(rm_log);
+        Ok(())
     }
+}
 
-    let target_canon = func::get_execute_target(&work_path, &target);
-    let mut file_name = String::from(target_canon.file_name().unwrap().to_str().unwrap());
-    let file_path = String::from(target_canon.parent().unwrap().to_str().unwrap());
-    file_name += &func::gen_rand_str(RAND_STR_LEN);
-    recycle.push(file_name.clone());
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct RecycleBin;
 
-    let command = String::from(format!("mv {} {}", target.display(), recycle.display()));
-    func::execute_command(&command);
-    let now: DateTime<Local> = Local::now();
-    let rm_log = format!("{}{}{}{}{}",
-                         recycle.display(),
-                         SPLITTER,
-                         file_path,
-                         SPLITTER,
-                         now.format("%Y-%m-%d %H:%M:%S%.3f"));
-    rm_stack.push(rm_log);
+impl HinaModuleRun for RecycleBin {
+    fn run(&self,
+           _work_path: &PathBuf,
+           _data_path: &PathBuf,
+           _recycle_path: &PathBuf,
+           _user: &String,
+           _uid: &String,
+           _flags: &ExecFlag,
+           _rm_stack: &mut Vec<String>,
+           _target: &PathBuf
+    ) -> Result<(), HinaError> {
+        todo!()
+    }
 }
 
 pub fn restore(rm_paths: Vec<(PathBuf, PathBuf)>,

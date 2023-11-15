@@ -1,27 +1,19 @@
 use std::collections::HashMap;
 
-#[derive(Debug, Clone)]
-pub enum Action {
-    Remove,
-    Restore,
-    EmptyTrash,
-    Process,
-    ProcessAncestor,
-    MakeNestedDir,
-    SymlinkToLink,
-    LinkToSymlink,
-    Rename,
-    RenameSym,
-    DumpMemory,
-    MemoryDetail,
+use crate::core::error::HinaError;
+use crate::core::global::TARGET_MAP;
+use crate::event::recycle::{RecycleBin, Remove};
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub enum Target {
+    Remove(Remove),
+    RecycleBin(RecycleBin),
     None,
-    Test,
-    ILLEGAL,
 }
 
 #[derive(Debug, Clone)]
 pub struct Config {
-    action: Action,
+    target: Target,
     args: Vec<String>,
     flags: HashMap<String, String>,
 }
@@ -36,34 +28,17 @@ impl Config {
         }
     }
 
-    pub fn build(input: &[String]) -> Result<Config, &'static str> {
-        let action_: Action;
+    pub fn build(input: &[String]) -> Result<Config, HinaError> {
+        let target;
         if input.len() < 2 {
-            action_ = Action::None;
+            target = Target::None;
         } else {
-            action_ = match &input[1] as &str {
-                "rm" => { Action::Remove }
-                "remove" => { Action::Remove }
-                "rs" => { Action::Restore }
-                "restore" => { Action::Restore }
-                "et" => { Action::EmptyTrash }
-                "empty-trash" => { Action::EmptyTrash }
-                "mkndir" => { Action::MakeNestedDir }
-                "s2l" => { Action::SymlinkToLink }
-                "l2s" => { Action::LinkToSymlink }
-                "rn" => { Action::Rename }
-                "rnsym" => { Action::RenameSym }
-                "ps" => { Action::Process }
-                "pa" => { Action::ProcessAncestor }
-                "dm" => { Action::DumpMemory }
-                "mem" => { Action::MemoryDetail }
-                "test" => { Action::Test }
-                _ => { Action::ILLEGAL }
-            };
-        }
-
-        if matches!(action_,Action::ILLEGAL) {
-            return Err("Not a legal action");
+            if TARGET_MAP.contains_key(input[1].as_str()) {
+                target = TARGET_MAP[input[1].as_str()].0.clone();
+            } else {
+                let err = format!("Illegal action \'{}\'", input[1]);
+                return Err(HinaError::ConfigParseError(err));
+            }
         }
 
         let mut args_or_flags = Vec::new();
@@ -74,14 +49,12 @@ impl Config {
         }
 
         let (flags, args) = Config::parse_flag_and_arg(&mut args_or_flags);
-
-        let config = Config { action: action_, args, flags };
-
+        let config = Config { target, args, flags };
         return Ok(config);
     }
 
-    pub fn get_action(&self) -> &Action {
-        return &self.action;
+    pub fn get_target(&self) -> &Target {
+        return &self.target;
     }
 
     pub fn get_args(&self) -> &Vec<String> {
@@ -90,10 +63,6 @@ impl Config {
 
     pub fn get_flags(&self) -> &HashMap<String, String> {
         return &self.flags;
-    }
-
-    pub fn arg_num(&self) -> u8 {
-        return self.args.len() as u8;
     }
 
     fn parse_flag_and_arg(input: &mut Vec<String>) -> (HashMap<String, String>, Vec<String>) {
