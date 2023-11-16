@@ -1,8 +1,9 @@
 use std::cmp::max;
+use std::collections::HashMap;
 use std::env;
 use std::fs;
 use std::fs::{File, OpenOptions};
-use std::io::{Read, Write};
+use std::io::{BufReader, BufWriter};
 use std::path::PathBuf;
 use std::process::Stdio;
 
@@ -10,17 +11,20 @@ use execute::{Execute, shell};
 use rand::{Rng, thread_rng};
 use rand::distributions::Alphanumeric;
 
+use crate::core::config::RMRecord;
 use crate::core::error::HinaError;
-use crate::core::global::{DEBUG, RAND_STR_LEN, RECYCLE, RM_STACK, SPLITTER};
+use crate::core::error::HinaError::{DirCreateError, FileCreateError, FileOpenError, FileWriteError};
+use crate::core::global::{DEBUG, RECYCLE, RM_STACK};
 
 fn read_var(var_name: &str) -> Result<String, HinaError> {
-    return match env::var(var_name) {
+    // Read variable from system variables
+    match env::var(var_name) {
         Ok(val) => { Ok(val) }
         Err(_) => {
             let err = format!("Cannot locate variable {}", var_name);
             Err(HinaError::VarError(err))
         }
-    };
+    }
 }
 
 pub fn get_home() -> Result<String, HinaError> {
@@ -32,15 +36,17 @@ pub fn get_user() -> Result<String, HinaError> {
 }
 
 pub fn get_current_path() -> Result<PathBuf, HinaError> {
-    return match env::current_dir() {
+    // Get Hina working path
+    match env::current_dir() {
         Ok(cur) => { Ok(cur) }
         Err(err) => {
             Err(HinaError::WorkPathError(err.to_string()))
         }
-    };
+    }
 }
 
 pub fn get_uid() -> Result<String, HinaError> {
+    // Use unix shell "id" to get user id
     let command = format!("id");
     let output = execute_command(&command)?;
     let uid = output
@@ -53,50 +59,27 @@ pub fn get_uid() -> Result<String, HinaError> {
     Ok(uid)
 }
 
-pub fn split_and_remove_blank(content: &String, pattern: &str) -> Vec<String> {
-    return content
-        .split(pattern)
-        .map(|s| s.to_string())
-        .filter(|s| !s.is_empty())
-        .collect();
-}
-
-pub fn execute_command(input: &String) -> Result<String, HinaError> {
-    let mut command = shell(input);
-    command.stdout(Stdio::piped());
-    let command_out_utf_8 = match command.execute_output() {
-        Ok(output) => { output.stdout }
-        Err(err) => { return Err(HinaError::CommandExecError(err.to_string())); }
-    };
-    return match String::from_utf8(command_out_utf_8) {
-        Ok(output) => { Ok(output) }
-        Err(err) => { Err(HinaError::CommandParseError(err.to_string())) }
-    };
-}
-
-pub fn get_execute_target(work_path: &PathBuf, input_path: &PathBuf) -> Result<PathBuf, HinaError> {
-    let mut target;
-    if input_path.is_absolute() {
-        target = input_path.clone();
+pub fn parse_flag_bool(flags: &HashMap<String, String>, symbol: &str) -> bool {
+    if flags.contains_key(symbol) {
+        true
     } else {
-        target = work_path.clone();
-        target.push(&input_path);
+        false
     }
-    if target.exists() {
-        if !target.is_symlink() {
-            return match target.canonicalize() {
-                Ok(path) => { Ok(path) }
-                Err(_) => {
-                    let err = format!("Unable to open {}", target.display());
-                    Err(HinaError::BadFileError(err))
-                }
-            };
-        } else {
-            Ok(target)
-        }
+}
+
+pub fn parse_flag_string(flags: &HashMap<String, String>, symbol: &str) -> String {
+    if flags.contains_key(symbol) {
+        flags[symbol].clone()
     } else {
-        let err = format!("Unable to locate {}", target.display());
-        Err(HinaError::FileNotExistError(err))
+        String::new()
+    }
+}
+
+pub fn parse_flag_u(flags: &HashMap<String, String>, symbol: &str) -> usize {
+    if flags.contains_key(symbol) {
+        flags[symbol].clone().parse().unwrap_or(0)
+    } else {
+        0
     }
 }
 
@@ -108,92 +91,143 @@ pub fn parse_args_or(args: &Vec<String>, default: String) -> Vec<String> {
     };
 }
 
-pub fn init_data_dir(data_path: &PathBuf) {
-    let mut data_path_ = data_path.clone();
-    if !data_path.exists() {
-        if *DEBUG {
-            println!("Running first time, init {}", data_path.display());
+pub fn execute_command(input: &String) -> Result<String, HinaError> {
+    // Shell utils, for running a unix shell
+    let mut command = shell(input);
+    command.stdout(Stdio::piped());
+    let command_out_utf_8 = match command.execute_output() {
+        Ok(output) => { output.stdout }
+        Err(err) => { return Err(HinaError::CommandExecError(err.to_string())); }
+    };
+    match String::from_utf8(command_out_utf_8) {
+        Ok(output) => { Ok(output) }
+        Err(err) => { Err(HinaError::CommandParseError(err.to_string())) }
+    }
+}
+
+pub fn get_execute_target(work_path: &PathBuf, input_path: &PathBuf) -> Result<PathBuf, HinaError> {
+    // Parse real execute target from input and return the abs path
+    let mut target;
+    if input_path.is_absolute() {
+        target = input_path.clone();
+    } else {
+        target = work_path.clone();
+        target.push(&input_path);
+    }
+    if target.exists() {
+        if !target.is_symlink() {
+            match target.canonicalize() {
+                Ok(path) => { Ok(path) }
+                Err(_) => {
+                    let err = format!("Unable to open {}", target.display());
+                    Err(HinaError::BadFileError(err))
+                }
+            }
+        } else {
+            Ok(target)
         }
-        fs::create_dir(&data_path_).unwrap();
+    } else {
+        let err = format!("Unable to locate {}", target.display());
+        Err(HinaError::FileNotExistError(err))
+    }
+}
 
-        data_path_.push(RECYCLE);
-        fs::create_dir(&data_path_).unwrap();
-        data_path_.pop();
+pub fn init_data_dir(data_path: &PathBuf) -> Result<(), HinaError> {
+    // Hina utils, for initializing the Hina data dir containing recycle bin and etc.
+    let mut mut_data_path = data_path.clone();
+    if !mut_data_path.exists() {
+        if *DEBUG {
+            println!("Running first time, init {}", mut_data_path.display());
+        }
 
-        data_path_.push(RM_STACK);
-        File::create(data_path_).unwrap();
+        // Create Hina data dir
+        match fs::create_dir(&mut_data_path) {
+            Ok(_) => {}
+            Err(err) => { return Err(DirCreateError(err.to_string())); }
+        }
+
+        // Create Hina recycle bin
+        mut_data_path.push(RECYCLE);
+        match fs::create_dir(&mut_data_path) {
+            Ok(_) => {}
+            Err(err) => { return Err(DirCreateError(err.to_string())); }
+        }
+
+        // RM_STACK for recording the removed file source
+        mut_data_path.pop();
+        mut_data_path.push(RM_STACK);
+        match File::create(&mut_data_path) {
+            Ok(_) => {}
+            Err(err) => { return Err(FileCreateError(err.to_string())); }
+        }
     } else {
         if *DEBUG {
             println!("{} exists, skip initiation", data_path.display());
         }
     }
+    Ok(())
 }
 
-pub fn load_rm_stack(data_path: &PathBuf) -> Vec<String> {
-    let mut data_path_ = data_path.clone();
-    data_path_.push(RM_STACK);
-    let mut file = File::open(data_path_).unwrap();
-    let mut contents = String::new();
-    file.read_to_string(&mut contents).unwrap();
-    let rm_stack: Vec<String> = split_and_remove_blank(&contents, "\n");
+pub fn load_rm_stack(data_path: &PathBuf) -> Result<Vec<RMRecord>, HinaError> {
+    // Load the RM_STACK for recycle bin
+    let mut rm_stack_path = data_path.clone();
+    rm_stack_path.push(RM_STACK);
+    let file = match File::open(rm_stack_path) {
+        Ok(file) => { file }
+        Err(err) => { return Err(FileOpenError(err.to_string())); }
+    };
+    let reader = BufReader::new(file);
+    let rm_stack = match serde_json::from_reader(reader) {
+        Ok(rm_stack) => { rm_stack }
+        Err(_) => { Vec::new() }
+    };
 
     if *DEBUG {
         dbg!(&rm_stack);
     }
-
-    return rm_stack;
+    Ok(rm_stack)
 }
 
 pub fn save_rm_stack(data_path: &PathBuf,
-                     rm_stack: &Vec<String>) {
-    let mut data_path_ = data_path.clone();
-    data_path_.push(RM_STACK);
-    let mut file = OpenOptions::new()
+                     rm_stack: &Vec<RMRecord>) -> Result<(), HinaError> {
+    // Write RM_STACK back to disk
+    let mut rm_stack_path = data_path.clone();
+    rm_stack_path.push(RM_STACK);
+    let file = match OpenOptions::new()
         .read(true)
         .write(true)
         .create(true)
         .truncate(true)
-        .open(data_path_).unwrap();
-    for content in rm_stack {
-        file.write(content.as_bytes()).unwrap();
-        file.write(b"\n").unwrap();
+        .open(rm_stack_path) {
+        Ok(file) => { file }
+        Err(err) => { return Err(FileOpenError(err.to_string())); }
+    };
+    let writer = BufWriter::new(file);
+    match serde_json::to_writer(writer, rm_stack) {
+        Ok(_) => {}
+        Err(err) => { return Err(FileWriteError(err.to_string())); }
     }
 
     if *DEBUG {
         dbg!(&rm_stack);
     }
+    Ok(())
 }
 
-pub fn show_rm_stack(rm_stack: &Vec<String>) -> Vec<(PathBuf, PathBuf)> {
-    let mut paths: Vec<(PathBuf, PathBuf)> = Vec::new();
-    for (i, rm_log) in rm_stack.iter().enumerate() {
-        let record: Vec<String> = rm_log
-            .split(SPLITTER)
-            .map(|s| s.to_string())
-            .collect();
-        let file = PathBuf::from(&record[0]);
-        let mut path = PathBuf::from(&record[1]);
-        let filename = file.file_name().unwrap().to_str().unwrap();
-        path.push(&filename[..filename.len() - (RAND_STR_LEN as usize)]);
-        paths.push((file.clone(), path.clone()));
-        println!("{}: {}\tDelete Time: {}",
-                 i,
-                 path.display(),
-                 record[2]);
-    }
-    if *DEBUG {
-        dbg!(&paths);
-    }
-    return paths;
+pub fn split_and_remove_blank(content: &String, pattern: &str) -> Vec<String> {
+    return content
+        .split(pattern)
+        .map(|s| s.to_string())
+        .filter(|s| !s.is_empty())
+        .collect();
 }
 
-pub fn gen_rand_str(len: u8) -> String {
-    let rand_string: String = thread_rng()
+pub fn gen_rand_str(len: usize) -> String {
+    return thread_rng()
         .sample_iter(&Alphanumeric)
-        .take(len as usize)
+        .take(len)
         .map(char::from)
         .collect();
-    return rand_string;
 }
 
 pub fn gen_str_width_ctrl(str: &String, width: usize) -> String {

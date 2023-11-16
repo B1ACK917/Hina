@@ -1,13 +1,20 @@
 use std::collections::HashMap;
 
+use serde::{Deserialize, Serialize};
+
 use crate::core::error::HinaError;
 use crate::core::global::TARGET_MAP;
+use crate::event::fs::{MakeNestedDir, Rename};
+use crate::event::process::Process;
 use crate::event::recycle::{RecycleBin, Remove};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum Target {
     Remove(Remove),
     RecycleBin(RecycleBin),
+    MakeNestedDir(MakeNestedDir),
+    Process(Process),
+    Rename(Rename),
     None,
 }
 
@@ -16,6 +23,13 @@ pub struct Config {
     target: Target,
     args: Vec<String>,
     flags: HashMap<String, String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct RMRecord {
+    file: String,
+    src: String,
+    delete_time: String,
 }
 
 impl Config {
@@ -74,5 +88,29 @@ impl Config {
             }
         ).collect();
         return (flags, args);
+    }
+}
+
+impl RMRecord {
+    pub fn from(file: String,
+                src: String,
+                delete_time: String) -> RMRecord {
+        return RMRecord {
+            file,
+            src,
+            delete_time,
+        };
+    }
+
+    pub fn get_file(&self) -> &String {
+        return &self.file;
+    }
+
+    pub fn get_src(&self) -> &String {
+        return &self.src;
+    }
+
+    pub fn get_del_time(&self) -> &String {
+        return &self.delete_time;
     }
 }

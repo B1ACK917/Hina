@@ -20,5 +20,6 @@ fn main() -> Result<(), HinaError> {
     if *DEBUG {
         dbg!(&executor);
     }
-    Ok(executor.run()?)
+    executor.run()?;
+    Ok(())
 }
