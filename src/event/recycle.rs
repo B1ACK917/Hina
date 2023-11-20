@@ -1,14 +1,14 @@
-use std::collections::HashMap;
 use std::io::stdin;
 use std::path::PathBuf;
 
 use chrono::{DateTime, Local};
 
-use crate::core::config::RMRecord;
+use crate::core::config::{Flag, RMRecord};
 use crate::core::error::HinaError;
 use crate::core::error::HinaError::{FileExistError, OutOfIndexError};
 use crate::core::func;
 use crate::core::global::RAND_STR_LEN;
+use crate::debugln;
 use crate::event::base::HinaModuleRun;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -24,7 +24,7 @@ impl HinaModuleRun for Remove {
            _recycle_path: &PathBuf,
            _user: &String,
            _uid: &String,
-           _flags: &HashMap<String, String>,
+           _flags: &Flag,
            _rm_stack: &mut Vec<RMRecord>,
            _target: &PathBuf,
            _arg_num: usize,
@@ -37,6 +37,7 @@ impl HinaModuleRun for Remove {
         recycle_bin.push(file_name.clone());
 
         let command = String::from(format!("mv \"{}\" \"{}\"", _target.display(), recycle_bin.display()));
+        debugln!("Trying to execute \"{}\"",command);
         func::execute_command(&command)?;
         let now: DateTime<Local> = Local::now();
         _rm_stack.push(RMRecord::from(
@@ -55,14 +56,14 @@ impl HinaModuleRun for RecycleBin {
            _recycle_path: &PathBuf,
            _user: &String,
            _uid: &String,
-           _flags: &HashMap<String, String>,
+           _flags: &Flag,
            _rm_stack: &mut Vec<RMRecord>,
            _target: &PathBuf,
            _arg_num: usize,
     ) -> Result<(), HinaError> {
-        let _list = func::parse_flag_bool(_flags, "ls");
-        let _restore = func::parse_flag_bool(_flags, "rs");
-        let _empty = func::parse_flag_bool(_flags, "ept");
+        let _list = _flags.parse_bool("ls");
+        let _restore = _flags.parse_bool("rs");
+        let _empty = _flags.parse_bool("ept");
         if _list { RecycleBin::show(_rm_stack)? }
         if _restore {
             RecycleBin::show(_rm_stack)?;

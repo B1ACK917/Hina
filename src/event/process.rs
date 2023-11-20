@@ -5,11 +5,11 @@ use std::io::Read;
 use std::path::PathBuf;
 use std::string::ToString;
 
-use crate::core::config::RMRecord;
+use crate::core::config::{Flag, RMRecord};
 use crate::core::error::HinaError;
-use crate::core::func;
-use crate::core::func::{parse_flag_bool, parse_flag_string, parse_flag_u, print_info};
+use crate::core::func::{execute_command, print_info, split_and_remove_blank};
 use crate::core::global::{DEBUG, MEM_EXTRACT_RE};
+use crate::debugln;
 use crate::event::base::HinaModuleRun;
 
 #[derive(Debug, Clone)]
@@ -76,7 +76,7 @@ impl ProcessInfo {
 
 impl ProcessMapMeta {
     pub fn from(smap_block: &Vec<&str>, cmdline: &String) -> ProcessMapMeta {
-        let keys = func::split_and_remove_blank(&smap_block[0].to_string(), " ");
+        let keys = split_and_remove_blank(&smap_block[0].to_string(), " ");
         let mut maps: HashMap<String, usize> = HashMap::new();
         for line in smap_block {
             let caps = MEM_EXTRACT_RE.captures(line);
@@ -152,17 +152,17 @@ impl HinaModuleRun for Process {
            _recycle_path: &PathBuf,
            _user: &String,
            _uid: &String,
-           _flags: &HashMap<String, String>,
+           _flags: &Flag,
            _rm_stack: &mut Vec<RMRecord>,
            _target: &PathBuf,
            _arg_num: usize,
     ) -> Result<(), HinaError> {
-        let spec_pattern = parse_flag_string(_flags, "i");
-        let ans_id = parse_flag_u(_flags, "a");
-        let dump = parse_flag_bool(_flags, "dump");
-        let xray = parse_flag_bool(_flags, "x");
-        let sort_by = parse_flag_string(_flags, "s");
-        let human_readable = parse_flag_bool(_flags, "h");
+        let spec_pattern = _flags.parse_string("i");
+        let ans_id = _flags.parse_uint("a");
+        let dump = _flags.parse_bool("dump");
+        let xray = _flags.parse_bool("x");
+        let sort_by = _flags.parse_string("s");
+        let human_readable = _flags.parse_bool("h");
         if ans_id != 0 {
             Process::show_process_ancestor(ans_id)?;
             return Ok(());
@@ -194,7 +194,7 @@ impl HinaModuleRun for Process {
 impl Process {
     fn get_all_process() -> Result<Vec<ProcessInfo>, HinaError> {
         let command = format!("ps -ef | sed -n '2,$p'");
-        let output = func::execute_command(&command)?;
+        let output = execute_command(&command)?;
         let entries: Vec<&str> = output.trim().split("\n").collect();
         let mut all_process = Vec::new();
         for entry in entries {
@@ -205,7 +205,7 @@ impl Process {
 
     fn get_ps_head() -> Result<String, HinaError> {
         let command = String::from("ps -ef | sed -n '1p'");
-        Ok(func::execute_command(&command)?)
+        Ok(execute_command(&command)?)
     }
 
     pub fn build_proc_map_list(smap_input: &String, cmd_input: Option<&String>) -> ProcessMap {
@@ -314,17 +314,15 @@ impl Process {
             .iter()
             .filter(|x| &x._uid == user || &x._uid == uid)
             .collect();
-        if *DEBUG {
-            dbg!(&user_process);
-        }
+        debugln!("{:?}",&user_process);
         for process in user_process {
             let pid = &process._pid;
             target.push(pid.to_string());
             fs::create_dir(&target).unwrap();
             let command = String::from(format!("cat /proc/{}/smaps > {}/smaps", pid, &target.display()));
-            func::execute_command(&command)?;
+            execute_command(&command)?;
             let command = String::from(format!("cat /proc/{}/cmdline > {}/cmdline", pid, &target.display()));
-            func::execute_command(&command)?;
+            execute_command(&command)?;
             target.pop();
         }
         Ok(())

@@ -35,3 +35,12 @@ pub static RECYCLE: &str = "RecycleBin";
 pub static RAND_STR_LEN: usize = 16;
 pub static MAX_RECURSIVE_DEPTH: usize = 64;
 pub static MEM_EXTRACT_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?P<name>\S+):\s+(?P<amount>\d+) kB").unwrap());
+
+#[macro_export]
+macro_rules! debugln {
+    ($($arg:tt)*) => {{
+        if *DEBUG {
+            println!($($arg)*);
+        }
+    }};
+}

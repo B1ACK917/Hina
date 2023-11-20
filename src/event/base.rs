@@ -1,7 +1,6 @@
-use std::collections::HashMap;
 use std::path::PathBuf;
 
-use crate::core::config::RMRecord;
+use crate::core::config::{Flag, RMRecord};
 use crate::core::error::HinaError;
 
 pub trait HinaModuleRun {
@@ -11,7 +10,7 @@ pub trait HinaModuleRun {
            _recycle_path: &PathBuf,
            _user: &String,
            _uid: &String,
-           _flags: &HashMap<String, String>,
+           _flags: &Flag,
            _rm_stack: &mut Vec<RMRecord>,
            _target: &PathBuf,
            _arg_num: usize) -> Result<(), HinaError> {

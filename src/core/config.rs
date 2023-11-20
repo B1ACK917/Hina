@@ -19,10 +19,15 @@ pub enum Target {
 }
 
 #[derive(Debug, Clone)]
+pub struct Flag {
+    flags: HashMap<String, String>,
+}
+
+#[derive(Debug, Clone)]
 pub struct Config {
     target: Target,
     args: Vec<String>,
-    flags: HashMap<String, String>,
+    flags: Flag,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -30,6 +35,40 @@ pub struct RMRecord {
     file: String,
     src: String,
     delete_time: String,
+}
+
+impl Flag {
+    pub fn parse_bool(&self, symbol: &str) -> bool {
+        if self.flags.contains_key(symbol) {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn parse_string(&self, symbol: &str) -> String {
+        if self.flags.contains_key(symbol) {
+            self.flags[symbol].clone()
+        } else {
+            String::new()
+        }
+    }
+
+    pub fn parse_uint(&self, symbol: &str) -> usize {
+        if self.flags.contains_key(symbol) {
+            self.flags[symbol].clone().parse().unwrap_or(0)
+        } else {
+            0
+        }
+    }
+
+    // pub fn parse_int(&self, symbol: &str) -> isize {
+    //     if self.flags.contains_key(symbol) {
+    //         self.flags[symbol].clone().parse().unwrap_or(-1)
+    //     } else {
+    //         -1
+    //     }
+    // }
 }
 
 impl Config {
@@ -63,7 +102,11 @@ impl Config {
         }
 
         let (flags, args) = Config::parse_flag_and_arg(&mut args_or_flags);
-        let config = Config { target, args, flags };
+        let config = Config {
+            target,
+            args,
+            flags: Flag { flags },
+        };
         return Ok(config);
     }
 
@@ -75,7 +118,7 @@ impl Config {
         return &self.args;
     }
 
-    pub fn get_flags(&self) -> &HashMap<String, String> {
+    pub fn get_flags(&self) -> &Flag {
         return &self.flags;
     }
 

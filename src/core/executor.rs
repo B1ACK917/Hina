@@ -1,7 +1,6 @@
-use std::collections::HashMap;
 use std::path::PathBuf;
 
-use crate::core::config::{Config, RMRecord, Target};
+use crate::core::config::{Config, Flag, RMRecord, Target};
 use crate::core::error::HinaError;
 use crate::core::func;
 use crate::core::global::{DATA_DIR, RECYCLE};
@@ -45,7 +44,7 @@ impl Executor {
                 _recycle_path: &PathBuf,
                 _user: &String,
                 _uid: &String,
-                _flags: &HashMap<String, String>,
+                _flags: &Flag,
                 _rm_stack: &mut Vec<RMRecord>,
                 args: &Vec<String>) -> Result<(), HinaError> {
         let args_ = func::parse_args_or(args, String::from("."));

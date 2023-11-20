@@ -1,5 +1,4 @@
 use std::cmp::max;
-use std::collections::HashMap;
 use std::env;
 use std::fs;
 use std::fs::{File, OpenOptions};
@@ -57,30 +56,6 @@ pub fn get_uid() -> Result<String, HinaError> {
         .split("(")
         .collect::<Vec<&str>>()[0].to_string();
     Ok(uid)
-}
-
-pub fn parse_flag_bool(flags: &HashMap<String, String>, symbol: &str) -> bool {
-    if flags.contains_key(symbol) {
-        true
-    } else {
-        false
-    }
-}
-
-pub fn parse_flag_string(flags: &HashMap<String, String>, symbol: &str) -> String {
-    if flags.contains_key(symbol) {
-        flags[symbol].clone()
-    } else {
-        String::new()
-    }
-}
-
-pub fn parse_flag_u(flags: &HashMap<String, String>, symbol: &str) -> usize {
-    if flags.contains_key(symbol) {
-        flags[symbol].clone().parse().unwrap_or(0)
-    } else {
-        0
-    }
 }
 
 pub fn parse_args_or(args: &Vec<String>, default: String) -> Vec<String> {
