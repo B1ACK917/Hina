@@ -10,7 +10,7 @@ use execute::{Execute, shell};
 use rand::{Rng, thread_rng};
 use rand::distributions::Alphanumeric;
 
-use crate::{debug_fn, debug_var, debugln};
+use crate::{debug_fn, debugln};
 use crate::core::config::RMRecord;
 use crate::core::error::HinaError;
 use crate::core::error::HinaError::{DirCreateError, FileCreateError, FileOpenError, FileWriteError};
@@ -164,7 +164,6 @@ pub fn load_rm_stack(data_path: &PathBuf) -> Result<Vec<RMRecord>, HinaError> {
         Ok(rm_stack) => { rm_stack }
         Err(_) => { Vec::new() }
     };
-    debug_var!(rm_stack);
     Ok(rm_stack)
 }
 

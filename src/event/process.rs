@@ -5,7 +5,7 @@ use std::io::Read;
 use std::path::PathBuf;
 use std::string::ToString;
 
-use crate::{debug_fn, debugln};
+use crate::{debug_fn, debug_var, debugln};
 use crate::core::config::{Flag, RMRecord};
 use crate::core::error::HinaError;
 use crate::core::func::{execute_command, print_info, split_and_remove_blank};
@@ -49,6 +49,7 @@ pub struct Process;
 
 impl ProcessInfo {
     pub fn from(input: &str) -> ProcessInfo {
+        debug_fn!(input);
         let entries: Vec<String> = input
             .split(" ")
             .map(|s| s.to_string())
@@ -76,6 +77,7 @@ impl ProcessInfo {
 
 impl ProcessMapMeta {
     pub fn from(smap_block: &Vec<&str>, cmdline: &String) -> ProcessMapMeta {
+        debug_fn!(smap_block,cmdline);
         let keys = split_and_remove_blank(&smap_block[0].to_string(), " ");
         let mut maps: HashMap<String, usize> = HashMap::new();
         for line in smap_block {
@@ -106,6 +108,7 @@ impl ProcessMapMeta {
 
 impl ProcessMap {
     pub fn from(input: Vec<ProcessMapMeta>) -> ProcessMap {
+        debug_fn!(input);
         let keys = input[0]._maps.keys();
         let mut total: HashMap<String, u64> = HashMap::new();
         for key in keys {
@@ -122,14 +125,17 @@ impl ProcessMap {
     }
 
     pub fn get_total_as_kb(&self, key: &str) -> String {
+        debug_fn!(key);
         return format!("{} KB", self._total[&key.to_string()]);
     }
 
     pub fn get_total_as_str(&self, key: &str) -> String {
+        debug_fn!(key);
         return format!("{}", self._total[&key.to_string()]);
     }
 
     pub fn get_total_as_human_readable(&self, key: &str) -> String {
+        debug_fn!(key);
         let mut num = self._total[&key.to_string()] as f64;
         if num > 1024f64 {
             num /= 1024.0;
@@ -194,6 +200,7 @@ impl HinaModuleRun for Process {
 
 impl Process {
     fn get_all_process() -> Result<Vec<ProcessInfo>, HinaError> {
+        debug_fn!();
         let command = format!("ps -ef | sed -n '2,$p'");
         let output = execute_command(&command)?;
         let entries: Vec<&str> = output.trim().split("\n").collect();
@@ -205,11 +212,13 @@ impl Process {
     }
 
     fn get_ps_head() -> Result<String, HinaError> {
+        debug_fn!();
         let command = String::from("ps -ef | sed -n '1p'");
         Ok(execute_command(&command)?)
     }
 
     pub fn build_proc_map_list(smap_input: &String, cmd_input: Option<&String>) -> ProcessMap {
+        debug_fn!(smap_input,cmd_input);
         let lines: Vec<&str> = smap_input.split("\n").collect();
         let mut map_list: Vec<ProcessMapMeta> = Vec::new();
         let mut smap_block: Vec<&str> = Vec::new();
@@ -229,6 +238,7 @@ impl Process {
     }
 
     pub fn read_mem_detail_from_proc(proc_id: usize) -> Option<ProcessMap> {
+        debug_fn!(proc_id);
         let smap_file = PathBuf::from(format!("/proc/{}/smaps", proc_id));
         // let cmd_file = PathBuf::from(format!("/proc/{}/cmdline", proc_id));
         return if smap_file.exists() {
@@ -245,6 +255,7 @@ impl Process {
         };
     }
     pub fn show_user_all_process(user: &String, uid: &String) -> Result<(), HinaError> {
+        debug_fn!(user,uid);
         let all_process = Process::get_all_process()?;
         let user_process: Vec<&ProcessInfo> = all_process
             .iter()
@@ -260,6 +271,7 @@ impl Process {
     pub fn show_user_spec_process(user: &String,
                                   uid: &String,
                                   process_name: &String) -> Result<(), HinaError> {
+        debug_fn!(user,uid,process_name);
         let all_process = Process::get_all_process()?;
         let user_process: Vec<&ProcessInfo> = all_process
             .iter()
@@ -273,6 +285,7 @@ impl Process {
     }
 
     pub fn show_process_ancestor(process_id: usize) -> Result<(), HinaError> {
+        debug_fn!(process_id);
         let all_process = Process::get_all_process()?;
         let mut process_route = HashMap::new();
         for process in all_process {
@@ -301,6 +314,7 @@ impl Process {
     pub fn dump_proc(user: &String,
                      uid: &String,
                      target: &mut PathBuf) -> Result<(), HinaError> {
+        debug_fn!(user,uid,target);
         if target.exists() {
             let is_some = target.read_dir().unwrap().next().is_some();
             if is_some {
@@ -315,7 +329,7 @@ impl Process {
             .iter()
             .filter(|x| &x._uid == user || &x._uid == uid)
             .collect();
-        debugln!("{:?}",&user_process);
+        debug_var!(user_process);
         for process in user_process {
             let pid = &process._pid;
             target.push(pid.to_string());
@@ -333,6 +347,7 @@ impl Process {
                                uid: &String,
                                sort_by: &String,
                                human_readable: bool) -> Result<(), HinaError> {
+        debug_fn!(user,uid,sort_by,human_readable);
         let all_process = Process::get_all_process()?;
         let user_process: Vec<&ProcessInfo> = all_process
             .iter()

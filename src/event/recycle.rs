@@ -82,6 +82,7 @@ impl HinaModuleRun for RecycleBin {
 
 impl RecycleBin {
     fn show(rm_stack: &Vec<RMRecord>) -> Result<(), HinaError> {
+        debug_fn!(rm_stack);
         for (i, record) in rm_stack.iter().enumerate() {
             println!("{}: File: {}, delete-time: {}", i, record.get_src(), record.get_del_time());
         }
@@ -89,6 +90,7 @@ impl RecycleBin {
     }
 
     fn restore(rm_stack: &mut Vec<RMRecord>, index: isize) -> Result<(), HinaError> {
+        debug_fn!(rm_stack,index);
         if index < 0 || index as usize >= rm_stack.len() {
             return Err(OutOfIndexError(format!("Index {} is out of recycle bin", index)));
         }
@@ -106,6 +108,7 @@ impl RecycleBin {
     }
 
     fn empty(recycle_path: &PathBuf, rm_stack: &mut Vec<RMRecord>) -> Result<(), HinaError> {
+        debug_fn!(recycle_path,rm_stack);
         let command = String::from(format!("rm -rf {}/*", recycle_path.display()));
         func::execute_command(&command)?;
         rm_stack.clear();
