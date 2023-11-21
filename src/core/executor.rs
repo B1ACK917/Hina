@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use crate::{DEBUG, debug_fn};
 use crate::core::config::{Config, Flag, RMRecord, Target};
 use crate::core::error::HinaError;
 use crate::core::func;
@@ -18,6 +19,7 @@ pub struct Executor {
 
 impl Executor {
     pub fn build(config: Config) -> Result<Executor, HinaError> {
+        debug_fn!(config);
         let home_path_str = func::get_home()?;
 
         let work_path = func::get_current_path()?;
@@ -67,6 +69,7 @@ impl Executor {
     }
 
     pub fn run(&self) -> Result<(), HinaError> {
+        debug_fn!();
         func::init_data_dir(&self.data_path)?;
 
         let args = self.config.get_args();
@@ -87,6 +90,9 @@ impl Executor {
                 self.run_iter(module, &self.work_path, &self.data_path, &self.recycle_path, &self.user, &self.uid, flags, &mut rm_stack, args)?
             }
             Target::Rename(module) => {
+                self.run_iter(module, &self.work_path, &self.data_path, &self.recycle_path, &self.user, &self.uid, flags, &mut rm_stack, args)?
+            }
+            Target::LinkConvert(module) => {
                 self.run_iter(module, &self.work_path, &self.data_path, &self.recycle_path, &self.user, &self.uid, flags, &mut rm_stack, args)?
             }
             Target::None => {}

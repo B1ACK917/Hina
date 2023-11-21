@@ -1,13 +1,13 @@
 use std::fs;
-use std::os::unix::fs::symlink;
+use std::os::unix::fs::{MetadataExt, symlink};
 use std::path::PathBuf;
 
+use crate::{debug_fn, debugln};
 use crate::core::config::{Flag, RMRecord};
 use crate::core::error::HinaError;
 use crate::core::error::HinaError::DirReadError;
-use crate::core::func::get_execute_target;
+use crate::core::func::{execute_command, get_execute_target, split_and_remove_blank};
 use crate::core::global::{DEBUG, MAX_RECURSIVE_DEPTH};
-use crate::debugln;
 use crate::event::base::HinaModuleRun;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -31,6 +31,7 @@ impl HinaModuleRun for MakeNestedDir {
            _target: &PathBuf,
            _arg_num: usize,
     ) -> Result<(), HinaError> {
+        debug_fn!(_work_path,_data_path,_recycle_path,_user,_uid,_flags,_rm_stack,_target,_arg_num);
         MakeNestedDir::make_nested_dir(_target, _flags.parse_bool("r"))?;
         Ok(())
     }
@@ -40,6 +41,7 @@ impl MakeNestedDir {
     fn make_nested_dir_recursive(cur_path: &PathBuf,
                                  cur_depth: usize,
                                  max_depth: usize) -> Result<(), HinaError> {
+        debug_fn!(cur_path,cur_depth,max_depth);
         if cur_depth > max_depth {
             return Ok(());
         }
@@ -82,6 +84,7 @@ impl MakeNestedDir {
 
     fn make_nested_dir(target: &PathBuf,
                        recursive: bool) -> Result<(), HinaError> {
+        debug_fn!(target,recursive);
         let max_depth = if recursive { MAX_RECURSIVE_DEPTH } else { 0 };
         MakeNestedDir::make_nested_dir_recursive(target, 0, max_depth)?;
         Ok(())
@@ -100,6 +103,7 @@ impl HinaModuleRun for Rename {
            _target: &PathBuf,
            _arg_num: usize,
     ) -> Result<(), HinaError> {
+        debug_fn!(_work_path,_data_path,_recycle_path,_user,_uid,_flags,_rm_stack,_target,_arg_num);
         let in_str = _flags.parse_string("i");
         let out_str = _flags.parse_string("o");
         let append_str = _flags.parse_string("a");
@@ -117,6 +121,7 @@ impl Rename {
                      out_str: &String,
                      append_str: &String,
                      num: usize) -> Option<String> {
+        debug_fn!(name,in_str,out_str,append_str,num);
         let mut renamed = name.replace(in_str, out_str);
         renamed.insert_str(num, append_str);
         return if renamed != name.as_str() {
@@ -134,6 +139,7 @@ impl Rename {
                         rename_sym: bool,
                         cur_depth: usize,
                         max_depth: usize) -> Result<(), HinaError> {
+        debug_fn!(cur_path,in_str,out_str,append_str,num,rename_sym,cur_depth,max_depth);
         if cur_depth > max_depth {
             return Ok(());
         }
@@ -187,6 +193,7 @@ impl Rename {
               num: usize,
               recursive: bool,
               rename_sym: bool) -> Result<(), HinaError> {
+        debug_fn!(target,in_str,out_str,append_str,num,recursive,rename_sym);
         let max_depth = if recursive { MAX_RECURSIVE_DEPTH } else { 0 };
         Rename::rename_recursive(target, in_str, out_str, append_str, num, rename_sym, 0, max_depth)?;
         Ok(())
@@ -205,14 +212,24 @@ impl HinaModuleRun for LinkConvert {
            _target: &PathBuf,
            _arg_num: usize,
     ) -> Result<(), HinaError> {
+        debug_fn!(_work_path,_data_path,_recycle_path,_user,_uid,_flags,_rm_stack,_target,_arg_num);
         let s2l = _flags.parse_bool("s2l");
         let l2s = _flags.parse_bool("l2s");
-        let input = _flags.parse_string("i");
+        let recursive = _flags.parse_bool("r");
+        let input = PathBuf::from(_flags.parse_string("i"));
+        let src_path = get_execute_target(_work_path, &input)?;
+        if s2l {
+            LinkConvert::convert(_target, &src_path, 0, recursive)?;
+        } else if l2s {
+            LinkConvert::convert(_target, &src_path, 1, recursive)?;
+        }
+        Ok(())
     }
 }
 
 impl LinkConvert {
     fn symlink_to_link(filepath: &PathBuf, cur_path: &PathBuf) -> Result<(), HinaError> {
+        debug_fn!(filepath,cur_path);
         if filepath.is_symlink() {
             let file_src = filepath.read_link().unwrap();
             match get_execute_target(cur_path, &file_src) {
@@ -227,35 +244,37 @@ impl LinkConvert {
         Ok(())
     }
 
-    fn link_to_symlink()->Result<(),HinaError> {
-            let meta = fs::metadata(&filepath).unwrap();
-            let inode = meta.ino();
-            let command = String::from(format!("find {} -inum {}", link_src.display(), inode));
-            let find_str = func::execute_command(&command)?;
-            let file_src_list: Vec<&str> = find_str.trim().split("\n").collect();
-            let mut file_src = "";
-            if file_src_list.len() == 1 {
-                file_src = file_src_list[0];
-                fs::remove_file(&filepath).unwrap();
-                symlink(&file_src, &filepath).unwrap();
-            } else if file_src_list.len() > 1 {
-                println!("Multiple src found, skip link convert for {}", filepath.display());
-            } else {
-                println!("No src found, skip link convert for {}", filepath.display());
-            }
-            if *DEBUG {
-                println!("{} inode num -> {}", &filepath.display(), inode);
-                println!("Symbol link {} -> {}", filepath.display(), file_src);
-                dbg!(&file_src_list);
-            }
+    fn link_to_symlink(filepath: &PathBuf, src_path: &PathBuf) -> Result<(), HinaError> {
+        debug_fn!(filepath,src_path);
+        if filepath.is_symlink() {
+            return Ok(());
         }
+        let meta = fs::metadata(&filepath).unwrap();
+        let inode = meta.ino();
+        let command = String::from(format!("find {} -inum {}", src_path.display(), inode));
+        let find_str = execute_command(&command)?;
+        let file_src_list = split_and_remove_blank(&find_str, "\n");
+        if file_src_list.len() == 1 {
+            let file_src = &file_src_list[0];
+            fs::remove_file(filepath).unwrap();
+            symlink(&file_src, &filepath).unwrap();
+            debugln!("{} inode num -> {}", &filepath.display(), inode);
+            debugln!("Symbol link {} -> {}", &filepath.display(), file_src);
+        } else if file_src_list.len() > 1 {
+            debugln!("Multiple src found, skip link convert for {}", filepath.display());
+        } else {
+            debugln!("No src found, skip link convert for {}", filepath.display());
+        }
+        debugln!("{:?}",file_src_list);
+        Ok(())
     }
 
     fn convert_recursive(cur_path: &PathBuf,
-                         input_path: &PathBuf,
+                         src_path: &PathBuf,
                          convert_type: u8,
                          cur_depth: usize,
                          max_depth: usize) -> Result<(), HinaError> {
+        debug_fn!(cur_path,src_path,convert_type,cur_depth,max_depth);
         if cur_depth > max_depth {
             return Ok(());
         }
@@ -263,61 +282,25 @@ impl LinkConvert {
         for entry in cur_path.read_dir().unwrap() {
             let filepath = entry.unwrap().path();
             if filepath.is_dir() {
-                LinkConvert::convert_recursive(&filepath, input_path, convert_type, cur_depth + 1, max_depth)?;
+                LinkConvert::convert_recursive(&filepath, src_path, convert_type, cur_depth + 1, max_depth)?;
             } else {
                 if convert_type == 0 {
                     LinkConvert::symlink_to_link(&filepath, cur_path)?;
-                } else if convert_type == 1 {}
+                } else if convert_type == 1 {
+                    LinkConvert::link_to_symlink(&filepath, src_path)?;
+                }
             }
         }
         Ok(())
     }
 
     pub fn convert(target: &PathBuf,
-                   input_path: &PathBuf,
+                   src_path: &PathBuf,
                    convert_type: u8,
                    recursive: bool) -> Result<(), HinaError> {
+        debug_fn!(target,src_path,convert_type,recursive);
         let max_depth = if recursive { MAX_RECURSIVE_DEPTH } else { 0 };
-        LinkConvert::convert_recursive(target, input_path, convert_type, 0, max_depth)?;
+        LinkConvert::convert_recursive(target, src_path, convert_type, 0, max_depth)?;
         Ok(())
     }
 }
-
-// fn link_to_symlink_recursive(cur_path: &Result<PathBuf, HinaError>,
-//                              link_src: &Result<PathBuf, HinaError>,
-//                              cur_depth: usize,
-//                              max_depth: usize) -> Result<(), HinaError> {
-//     if cur_depth > max_depth {
-//         return Ok(());
-//     }
-//
-//     for entry in cur_path.read_dir().unwrap() {
-//         let filepath = entry.unwrap().path();
-//         if filepath.is_dir() {
-//             link_to_symlink_recursive(&filepath, link_src, cur_depth + 1, max_depth);
-//         } else {
-//             let meta = fs::metadata(&filepath).unwrap();
-//             let inode = meta.ino();
-//             let command = String::from(format!("find {} -inum {}", link_src.display(), inode));
-//             let find_str = func::execute_command(&command)?;
-//             let file_src_list: Vec<&str> = find_str.trim().split("\n").collect();
-//             let mut file_src = "";
-//             if file_src_list.len() == 1 {
-//                 file_src = file_src_list[0];
-//                 fs::remove_file(&filepath).unwrap();
-//                 symlink(&file_src, &filepath).unwrap();
-//             } else if file_src_list.len() > 1 {
-//                 println!("Multiple src found, skip link convert for {}", filepath.display());
-//             } else {
-//                 println!("No src found, skip link convert for {}", filepath.display());
-//             }
-//             if *DEBUG {
-//                 println!("{} inode num -> {}", &filepath.display(), inode);
-//                 println!("Symbol link {} -> {}", filepath.display(), file_src);
-//                 dbg!(&file_src_list);
-//             }
-//         }
-//     }
-//     Ok(())
-// }
-//

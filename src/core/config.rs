@@ -4,7 +4,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::core::error::HinaError;
 use crate::core::global::TARGET_MAP;
-use crate::event::fs::{MakeNestedDir, Rename};
+use crate::DEBUG;
+use crate::debug_fn;
+use crate::event::fs::{LinkConvert, MakeNestedDir, Rename};
 use crate::event::process::Process;
 use crate::event::recycle::{RecycleBin, Remove};
 
@@ -15,6 +17,7 @@ pub enum Target {
     MakeNestedDir(MakeNestedDir),
     Process(Process),
     Rename(Rename),
+    LinkConvert(LinkConvert),
     None,
 }
 
@@ -39,6 +42,7 @@ pub struct RMRecord {
 
 impl Flag {
     pub fn parse_bool(&self, symbol: &str) -> bool {
+        debug_fn!(symbol);
         if self.flags.contains_key(symbol) {
             true
         } else {
@@ -47,6 +51,7 @@ impl Flag {
     }
 
     pub fn parse_string(&self, symbol: &str) -> String {
+        debug_fn!(symbol);
         if self.flags.contains_key(symbol) {
             self.flags[symbol].clone()
         } else {
@@ -55,33 +60,28 @@ impl Flag {
     }
 
     pub fn parse_uint(&self, symbol: &str) -> usize {
+        debug_fn!(symbol);
         if self.flags.contains_key(symbol) {
             self.flags[symbol].clone().parse().unwrap_or(0)
         } else {
             0
         }
     }
-
-    // pub fn parse_int(&self, symbol: &str) -> isize {
-    //     if self.flags.contains_key(symbol) {
-    //         self.flags[symbol].clone().parse().unwrap_or(-1)
-    //     } else {
-    //         -1
-    //     }
-    // }
 }
 
 impl Config {
-    pub fn add_flag(input: &String, map: &mut HashMap<String, String>) {
+    pub fn add_flag(input: &String, index: usize, map: &mut HashMap<String, String>) {
+        debug_fn!(input,map,index);
         if input.contains("=") {
             let entries: Vec<&str> = input.split("=").collect();
-            map.insert(entries[0][1..].to_string(), entries[1].to_string());
+            map.insert(entries[0][index..].to_string(), entries[1].to_string());
         } else {
-            map.insert(input[1..].to_string(), "".to_string());
+            map.insert(input[index..].to_string(), "".to_string());
         }
     }
 
     pub fn build(input: &[String]) -> Result<Config, HinaError> {
+        debug_fn!(input);
         let target;
         if input.len() < 2 {
             target = Target::None;
@@ -111,23 +111,33 @@ impl Config {
     }
 
     pub fn get_target(&self) -> &Target {
+        debug_fn!();
         return &self.target;
     }
 
     pub fn get_args(&self) -> &Vec<String> {
+        debug_fn!();
         return &self.args;
     }
 
     pub fn get_flags(&self) -> &Flag {
+        debug_fn!();
         return &self.flags;
     }
 
     fn parse_flag_and_arg(input: &mut Vec<String>) -> (HashMap<String, String>, Vec<String>) {
+        debug_fn!();
         let mut flags: HashMap<String, String> = HashMap::new();
         let mut args = Vec::new();
         let _: Vec<_> = input.iter().map(
             |x| {
-                if x.starts_with("-") { Config::add_flag(x, &mut flags) } else { args.push(x.clone()) }
+                if x.starts_with("--") {
+                    Config::add_flag(x, 2, &mut flags)
+                } else if x.starts_with("-") {
+                    Config::add_flag(x, 1, &mut flags)
+                } else {
+                    args.push(x.clone())
+                }
             }
         ).collect();
         return (flags, args);
@@ -138,6 +148,7 @@ impl RMRecord {
     pub fn from(file: String,
                 src: String,
                 delete_time: String) -> RMRecord {
+        debug_fn!();
         return RMRecord {
             file,
             src,
@@ -146,14 +157,17 @@ impl RMRecord {
     }
 
     pub fn get_file(&self) -> &String {
+        debug_fn!();
         return &self.file;
     }
 
     pub fn get_src(&self) -> &String {
+        debug_fn!();
         return &self.src;
     }
 
     pub fn get_del_time(&self) -> &String {
+        debug_fn!();
         return &self.delete_time;
     }
 }

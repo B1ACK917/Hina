@@ -3,12 +3,12 @@ use std::path::PathBuf;
 
 use chrono::{DateTime, Local};
 
+use crate::{DEBUG, debug_fn};
 use crate::core::config::{Flag, RMRecord};
 use crate::core::error::HinaError;
 use crate::core::error::HinaError::{FileExistError, OutOfIndexError};
 use crate::core::func;
 use crate::core::global::RAND_STR_LEN;
-use crate::debugln;
 use crate::event::base::HinaModuleRun;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -29,6 +29,7 @@ impl HinaModuleRun for Remove {
            _target: &PathBuf,
            _arg_num: usize,
     ) -> Result<(), HinaError> {
+        debug_fn!(_work_path,_data_path,_recycle_path,_user,_uid,_flags,_rm_stack,_target,_arg_num);
         if _arg_num < 1 {
             return Ok(());
         }
@@ -37,7 +38,6 @@ impl HinaModuleRun for Remove {
         recycle_bin.push(file_name.clone());
 
         let command = String::from(format!("mv \"{}\" \"{}\"", _target.display(), recycle_bin.display()));
-        debugln!("Trying to execute \"{}\"",command);
         func::execute_command(&command)?;
         let now: DateTime<Local> = Local::now();
         _rm_stack.push(RMRecord::from(
@@ -61,6 +61,7 @@ impl HinaModuleRun for RecycleBin {
            _target: &PathBuf,
            _arg_num: usize,
     ) -> Result<(), HinaError> {
+        debug_fn!(_work_path,_data_path,_recycle_path,_user,_uid,_flags,_rm_stack,_target,_arg_num);
         let _list = _flags.parse_bool("ls");
         let _restore = _flags.parse_bool("rs");
         let _empty = _flags.parse_bool("ept");

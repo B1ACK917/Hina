@@ -5,11 +5,11 @@ use std::io::Read;
 use std::path::PathBuf;
 use std::string::ToString;
 
+use crate::{debug_fn, debugln};
 use crate::core::config::{Flag, RMRecord};
 use crate::core::error::HinaError;
 use crate::core::func::{execute_command, print_info, split_and_remove_blank};
 use crate::core::global::{DEBUG, MEM_EXTRACT_RE};
-use crate::debugln;
 use crate::event::base::HinaModuleRun;
 
 #[derive(Debug, Clone)]
@@ -157,6 +157,7 @@ impl HinaModuleRun for Process {
            _target: &PathBuf,
            _arg_num: usize,
     ) -> Result<(), HinaError> {
+        debug_fn!(_work_path,_data_path,_recycle_path,_user,_uid,_flags,_rm_stack,_target,_arg_num);
         let spec_pattern = _flags.parse_string("i");
         let ans_id = _flags.parse_uint("a");
         let dump = _flags.parse_bool("dump");

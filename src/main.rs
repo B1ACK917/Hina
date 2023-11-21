@@ -17,9 +17,7 @@ fn main() -> Result<(), HinaError> {
 
     // Build executor with config
     let executor = Executor::build(config)?;
-    if *DEBUG {
-        dbg!(&executor);
-    }
+    debug_var!(executor);
     executor.run()?;
     Ok(())
 }
