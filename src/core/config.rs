@@ -1,69 +1,97 @@
 use std::collections::HashMap;
 
-#[derive(Debug, Clone)]
-pub enum Action {
-    Remove,
-    Restore,
-    EmptyTrash,
-    Process,
-    ProcessAncestor,
-    MakeNestedDir,
-    SymlinkToLink,
-    LinkToSymlink,
-    Rename,
-    RenameSym,
-    DumpMemory,
-    MemoryDetail,
+use serde::{Deserialize, Serialize};
+
+use crate::core::error::HinaError;
+use crate::core::global::TARGET_MAP;
+use crate::DEBUG;
+use crate::debug_fn;
+use crate::event::fs::{LinkConvert, MakeNestedDir, Rename};
+use crate::event::process::Process;
+use crate::event::recycle::{RecycleBin, Remove};
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub enum Target {
+    Remove(Remove),
+    RecycleBin(RecycleBin),
+    MakeNestedDir(MakeNestedDir),
+    Process(Process),
+    Rename(Rename),
+    LinkConvert(LinkConvert),
     None,
-    Test,
-    ILLEGAL,
+}
+
+#[derive(Debug, Clone)]
+pub struct Flag {
+    flags: HashMap<String, String>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Config {
-    action: Action,
+    target: Target,
     args: Vec<String>,
-    flags: HashMap<String, String>,
+    flags: Flag,
 }
 
-impl Config {
-    pub fn add_flag(input: &String, map: &mut HashMap<String, String>) {
-        if input.contains("=") {
-            let entries: Vec<&str> = input.split("=").collect();
-            map.insert(entries[0][1..].to_string(), entries[1].to_string());
+#[derive(Serialize, Deserialize, Debug)]
+pub struct RMRecord {
+    file: String,
+    src: String,
+    delete_time: String,
+}
+
+impl Flag {
+    pub fn parse_bool(&self, symbol: &str) -> bool {
+        debug_fn!(symbol);
+        if self.flags.contains_key(symbol) {
+            true
         } else {
-            map.insert(input[1..].to_string(), "".to_string());
+            false
         }
     }
 
-    pub fn build(input: &[String]) -> Result<Config, &'static str> {
-        let action_: Action;
-        if input.len() < 2 {
-            action_ = Action::None;
+    pub fn parse_string(&self, symbol: &str) -> String {
+        debug_fn!(symbol);
+        if self.flags.contains_key(symbol) {
+            self.flags[symbol].clone()
         } else {
-            action_ = match &input[1] as &str {
-                "rm" => { Action::Remove }
-                "remove" => { Action::Remove }
-                "rs" => { Action::Restore }
-                "restore" => { Action::Restore }
-                "et" => { Action::EmptyTrash }
-                "empty-trash" => { Action::EmptyTrash }
-                "mkndir" => { Action::MakeNestedDir }
-                "s2l" => { Action::SymlinkToLink }
-                "l2s" => { Action::LinkToSymlink }
-                "rn" => { Action::Rename }
-                "rnsym" => { Action::RenameSym }
-                "ps" => { Action::Process }
-                "pa" => { Action::ProcessAncestor }
-                "dm" => { Action::DumpMemory }
-                "mem" => { Action::MemoryDetail }
-                "test" => { Action::Test }
-                _ => { Action::ILLEGAL }
-            };
+            String::new()
         }
+    }
 
-        if matches!(action_,Action::ILLEGAL) {
-            return Err("Not a legal action");
+    pub fn parse_uint(&self, symbol: &str) -> usize {
+        debug_fn!(symbol);
+        if self.flags.contains_key(symbol) {
+            self.flags[symbol].clone().parse().unwrap_or(0)
+        } else {
+            0
+        }
+    }
+}
+
+impl Config {
+    pub fn add_flag(input: &String, index: usize, map: &mut HashMap<String, String>) {
+        debug_fn!(input,map,index);
+        if input.contains("=") {
+            let entries: Vec<&str> = input.split("=").collect();
+            map.insert(entries[0][index..].to_string(), entries[1].to_string());
+        } else {
+            map.insert(input[index..].to_string(), "".to_string());
+        }
+    }
+
+    pub fn build(input: &[String]) -> Result<Config, HinaError> {
+        debug_fn!(input);
+        let target;
+        if input.len() < 2 {
+            target = Target::None;
+        } else {
+            if TARGET_MAP.contains_key(input[1].as_str()) {
+                target = TARGET_MAP[input[1].as_str()].0.clone();
+            } else {
+                let err = format!("Illegal action \'{}\'", input[1]);
+                return Err(HinaError::ConfigParseError(err));
+            }
         }
 
         let mut args_or_flags = Vec::new();
@@ -74,36 +102,72 @@ impl Config {
         }
 
         let (flags, args) = Config::parse_flag_and_arg(&mut args_or_flags);
-
-        let config = Config { action: action_, args, flags };
-
+        let config = Config {
+            target,
+            args,
+            flags: Flag { flags },
+        };
         return Ok(config);
     }
 
-    pub fn get_action(&self) -> &Action {
-        return &self.action;
+    pub fn get_target(&self) -> &Target {
+        debug_fn!();
+        return &self.target;
     }
 
     pub fn get_args(&self) -> &Vec<String> {
+        debug_fn!();
         return &self.args;
     }
 
-    pub fn get_flags(&self) -> &HashMap<String, String> {
+    pub fn get_flags(&self) -> &Flag {
+        debug_fn!();
         return &self.flags;
     }
 
-    pub fn arg_num(&self) -> u8 {
-        return self.args.len() as u8;
-    }
-
     fn parse_flag_and_arg(input: &mut Vec<String>) -> (HashMap<String, String>, Vec<String>) {
+        debug_fn!();
         let mut flags: HashMap<String, String> = HashMap::new();
         let mut args = Vec::new();
         let _: Vec<_> = input.iter().map(
             |x| {
-                if x.starts_with("-") { Config::add_flag(x, &mut flags) } else { args.push(x.clone()) }
+                if x.starts_with("--") {
+                    Config::add_flag(x, 2, &mut flags)
+                } else if x.starts_with("-") {
+                    Config::add_flag(x, 1, &mut flags)
+                } else {
+                    args.push(x.clone())
+                }
             }
         ).collect();
         return (flags, args);
+    }
+}
+
+impl RMRecord {
+    pub fn from(file: String,
+                src: String,
+                delete_time: String) -> RMRecord {
+        debug_fn!();
+        return RMRecord {
+            file,
+            src,
+            delete_time,
+        };
+    }
+
+    pub fn get_file(&self) -> &String {
+        debug_fn!();
+        return &self.file;
+    }
+
+    pub fn get_src(&self) -> &String {
+        debug_fn!();
+        return &self.src;
+    }
+
+    pub fn get_del_time(&self) -> &String {
+        debug_fn!();
+        return &self.delete_time;
     }
 }
