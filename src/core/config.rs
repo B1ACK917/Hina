@@ -7,6 +7,7 @@ use crate::core::global::TARGET_MAP;
 use crate::DEBUG;
 use crate::debug_fn;
 use crate::event::fs::{LinkConvert, MakeNestedDir, Rename};
+use crate::event::holder::PlaceHold;
 use crate::event::process::Process;
 use crate::event::recycle::{RecycleBin, Remove};
 
@@ -18,7 +19,7 @@ pub enum Target {
     Process(Process),
     Rename(Rename),
     LinkConvert(LinkConvert),
-    None,
+    None(PlaceHold),
 }
 
 #[derive(Debug, Clone)]
@@ -41,31 +42,34 @@ pub struct RMRecord {
 }
 
 impl Flag {
-    pub fn parse_bool(&self, symbol: &str) -> bool {
-        debug_fn!(symbol);
-        if self.flags.contains_key(symbol) {
-            true
-        } else {
-            false
+    pub fn parse_bool(&self, symbols: Vec<&str>) -> bool {
+        debug_fn!(symbols);
+        for symbol in symbols {
+            if self.flags.contains_key(symbol) {
+                return true;
+            }
         }
+        return false;
     }
 
-    pub fn parse_string(&self, symbol: &str) -> String {
-        debug_fn!(symbol);
-        if self.flags.contains_key(symbol) {
-            self.flags[symbol].clone()
-        } else {
-            String::new()
+    pub fn parse_string(&self, symbols: Vec<&str>) -> String {
+        debug_fn!(symbols);
+        for symbol in symbols {
+            if self.flags.contains_key(symbol) {
+                return self.flags[symbol].clone();
+            }
         }
+        return String::new();
     }
 
-    pub fn parse_uint(&self, symbol: &str) -> usize {
-        debug_fn!(symbol);
-        if self.flags.contains_key(symbol) {
-            self.flags[symbol].clone().parse().unwrap_or(0)
-        } else {
-            0
+    pub fn parse_uint(&self, symbols: Vec<&str>) -> usize {
+        debug_fn!(symbols);
+        for symbol in symbols {
+            if self.flags.contains_key(symbol) {
+                return self.flags[symbol].clone().parse().unwrap_or(0);
+            }
         }
+        return 0;
     }
 }
 
@@ -83,11 +87,30 @@ impl Config {
     pub fn build(input: &[String]) -> Result<Config, HinaError> {
         debug_fn!(input);
         let target;
+        let index;
+        let need_parse;
         if input.len() < 2 {
-            target = Target::None;
+            target = Target::None(PlaceHold);
+            need_parse = false;
+            index = 0;
+        } else if input.len() == 2 {
+            if input[1].starts_with("-") {
+                target = Target::None(PlaceHold);
+                need_parse = true;
+                index = 1;
+            } else if TARGET_MAP.contains_key(input[1].as_str()) {
+                target = TARGET_MAP[input[1].as_str()].0.clone();
+                need_parse = false;
+                index = 0;
+            } else {
+                let err = format!("Illegal action \'{}\'", input[1]);
+                return Err(HinaError::ConfigParseError(err));
+            }
         } else {
             if TARGET_MAP.contains_key(input[1].as_str()) {
                 target = TARGET_MAP[input[1].as_str()].0.clone();
+                need_parse = true;
+                index = 2;
             } else {
                 let err = format!("Illegal action \'{}\'", input[1]);
                 return Err(HinaError::ConfigParseError(err));
@@ -95,8 +118,8 @@ impl Config {
         }
 
         let mut args_or_flags = Vec::new();
-        if input.len() > 2 {
-            for entry in &input[2..] {
+        if need_parse {
+            for entry in &input[index..] {
                 args_or_flags.push(entry.clone());
             }
         }

@@ -32,7 +32,8 @@ impl HinaModuleRun for MakeNestedDir {
            _arg_num: usize,
     ) -> Result<(), HinaError> {
         debug_fn!(_work_path,_data_path,_recycle_path,_user,_uid,_flags,_rm_stack,_target,_arg_num);
-        MakeNestedDir::make_nested_dir(_target, _flags.parse_bool("r"))?;
+        let recursive = _flags.parse_bool(vec!["r", "recursive"]);
+        MakeNestedDir::make_nested_dir(_target, recursive)?;
         Ok(())
     }
 }
@@ -104,12 +105,12 @@ impl HinaModuleRun for Rename {
            _arg_num: usize,
     ) -> Result<(), HinaError> {
         debug_fn!(_work_path,_data_path,_recycle_path,_user,_uid,_flags,_rm_stack,_target,_arg_num);
-        let in_str = _flags.parse_string("i");
-        let out_str = _flags.parse_string("o");
-        let append_str = _flags.parse_string("a");
-        let num = _flags.parse_uint("n");
-        let recursive = _flags.parse_bool("r");
-        let rename_sym = _flags.parse_bool("s");
+        let in_str = _flags.parse_string(vec!["i", "input"]);
+        let out_str = _flags.parse_string(vec!["o", "output"]);
+        let append_str = _flags.parse_string(vec!["a", "append"]);
+        let num = _flags.parse_uint(vec!["n"]);
+        let recursive = _flags.parse_bool(vec!["r", "recursive"]);
+        let rename_sym = _flags.parse_bool(vec!["s", "symlink"]);
         Rename::rename(_target, &in_str, &out_str, &append_str, num, recursive, rename_sym)?;
         Ok(())
     }
@@ -213,10 +214,10 @@ impl HinaModuleRun for LinkConvert {
            _arg_num: usize,
     ) -> Result<(), HinaError> {
         debug_fn!(_work_path,_data_path,_recycle_path,_user,_uid,_flags,_rm_stack,_target,_arg_num);
-        let s2l = _flags.parse_bool("s2l");
-        let l2s = _flags.parse_bool("l2s");
-        let recursive = _flags.parse_bool("r");
-        let input = PathBuf::from(_flags.parse_string("i"));
+        let s2l = _flags.parse_bool(vec!["s2l"]);
+        let l2s = _flags.parse_bool(vec!["l2s"]);
+        let recursive = _flags.parse_bool(vec!["r", "recursive"]);
+        let input = PathBuf::from(_flags.parse_string(vec!["i", "input"]));
         let src_path = get_execute_target(_work_path, &input)?;
         if s2l {
             LinkConvert::convert(_target, &src_path, 0, recursive)?;

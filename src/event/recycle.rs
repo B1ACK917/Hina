@@ -62,9 +62,9 @@ impl HinaModuleRun for RecycleBin {
            _arg_num: usize,
     ) -> Result<(), HinaError> {
         debug_fn!(_work_path,_data_path,_recycle_path,_user,_uid,_flags,_rm_stack,_target,_arg_num);
-        let _list = _flags.parse_bool("ls");
-        let _restore = _flags.parse_bool("rs");
-        let _empty = _flags.parse_bool("ept");
+        let _list = _flags.parse_bool(vec!["ls", "list"]);
+        let _restore = _flags.parse_bool(vec!["rs", "restore"]);
+        let _empty = _flags.parse_bool(vec!["ept", "empty"]);
         if _list { RecycleBin::show(_rm_stack)? }
         if _restore {
             RecycleBin::show(_rm_stack)?;

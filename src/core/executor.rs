@@ -95,7 +95,10 @@ impl Executor {
             Target::LinkConvert(module) => {
                 self.run_iter(module, &self.work_path, &self.data_path, &self.recycle_path, &self.user, &self.uid, flags, &mut rm_stack, args)?
             }
-            Target::None => {}
+
+            Target::None(module) => {
+                self.run_iter(module, &self.work_path, &self.data_path, &self.recycle_path, &self.user, &self.uid, flags, &mut rm_stack, args)?
+            }
         }
 
         func::save_rm_stack(&self.data_path, &rm_stack)?;

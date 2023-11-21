@@ -164,12 +164,12 @@ impl HinaModuleRun for Process {
            _arg_num: usize,
     ) -> Result<(), HinaError> {
         debug_fn!(_work_path,_data_path,_recycle_path,_user,_uid,_flags,_rm_stack,_target,_arg_num);
-        let spec_pattern = _flags.parse_string("i");
-        let ans_id = _flags.parse_uint("a");
-        let dump = _flags.parse_bool("dump");
-        let xray = _flags.parse_bool("x");
-        let sort_by = _flags.parse_string("s");
-        let human_readable = _flags.parse_bool("h");
+        let spec_pattern = _flags.parse_string(vec!["i", "input"]);
+        let ans_id = _flags.parse_uint(vec!["t", "track"]);
+        let dump = _flags.parse_bool(vec!["d", "dump"]);
+        let xray = _flags.parse_bool(vec!["x", "xray"]);
+        let sort_by = _flags.parse_string(vec!["s", "sort-by"]);
+        let human_readable = _flags.parse_bool(vec!["h", "human-readable"]);
         if ans_id != 0 {
             Process::show_process_ancestor(ans_id)?;
             return Ok(());
