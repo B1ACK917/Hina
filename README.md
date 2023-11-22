@@ -15,6 +15,7 @@ Hina is a versatile command-line utility for managing files and processes. It pr
   - [rn - Batch Rename Files or Symbolic Links](#rn---batch-rename-files-or-symbolic-links)
   - [lc - Link Conversion](#lc---link-conversion)
   - [ps - Advanced Process Listing](#ps---advanced-process-listing)
+- [DEBUG Mode](#debug-mode)
 - [Examples](#examples)
 - [Reporting Bugs](#reporting-bugs)
 
@@ -166,6 +167,22 @@ hina ps [path] [options]
 - **-x, --x-ray**: Display detailed memory usage information including Swap, USS, PSS, and Size.
 - **-s=SORT_FIELD, --sort-by=SORT_FIELD**: Sort detailed memory usage information by the specified field. Options: [swap, uss, pss, size, pid].
 - **-h, --human-readable**: Display memory usage information in human-readable units.
+
+
+
+## DEBUG Mode
+
+Hina supports a DEBUG mode, which can be enabled by setting the `DEBUG` environment variable. When DEBUG is enabled, the utility will print additional debug information during execution. To activate DEBUG mode, you can use the following command:
+
+```bash
+DEBUG=1 hina <COMMAND> <OPTIONS>
+```
+
+Replace `<COMMAND>` and `<OPTIONS>` with the actual command and options you are using. When DEBUG mode is active, Hina will provide more detailed information about its internal processes, aiding in troubleshooting and debugging.
+
+Note that if the `DEBUG` environment variable is not set, Hina will operate in the regular mode without printing debug information.
+
+This feature is particularly useful when diagnosing issues or understanding the inner workings of Hina during command execution.
 
 
 
