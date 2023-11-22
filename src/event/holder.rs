@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use crate::{DEBUG, debug_fn};
 use crate::core::config::{Flag, RMRecord};
 use crate::core::error::HinaError;
+use crate::core::global::HELP_DICT;
 use crate::event::base::HinaModuleRun;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -35,12 +36,25 @@ impl HinaModuleRun for PlaceHold {
 
 impl PlaceHold {
     fn print_help() -> Result<(), HinaError> {
+        debug_fn!();
+        println!("Usage: hina [-v | --version] [-h | --help] <module> [<params>]");
+        println!();
+        println!("These are common Hina commands used in various situations:");
+        println!();
+        for (help_situation, operations) in &*HELP_DICT {
+            println!("{}", help_situation);
+            for (module, desc) in operations {
+                println!("\t{}\t{} (See also: hina {} --help)", module, desc, module);
+            }
+            println!();
+        }
         Ok(())
     }
 
     fn print_version() -> Result<(), HinaError> {
+        debug_fn!();
         const VERSION: Option<&str> = option_env!("CARGO_PKG_VERSION");
-        println!("Hina v{}", VERSION.unwrap_or("unknown"));
+        println!("Hina version {}", VERSION.unwrap_or("unknown"));
         Ok(())
     }
 }

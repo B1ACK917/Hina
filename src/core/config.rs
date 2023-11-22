@@ -99,7 +99,7 @@ impl Config {
                 need_parse = true;
                 index = 1;
             } else if TARGET_MAP.contains_key(input[1].as_str()) {
-                target = TARGET_MAP[input[1].as_str()].0.clone();
+                target = TARGET_MAP[input[1].as_str()].clone();
                 need_parse = false;
                 index = 0;
             } else {
@@ -108,7 +108,7 @@ impl Config {
             }
         } else {
             if TARGET_MAP.contains_key(input[1].as_str()) {
-                target = TARGET_MAP[input[1].as_str()].0.clone();
+                target = TARGET_MAP[input[1].as_str()].clone();
                 need_parse = true;
                 index = 2;
             } else {

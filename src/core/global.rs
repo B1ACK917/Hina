@@ -15,19 +15,33 @@ pub static DEBUG: Lazy<bool> = Lazy::new(|| {
         Err(_) => false
     }
 });
-pub static TARGET_MAP: Lazy<HashMap<&str, (Target, &str)>> = Lazy::new(|| {
+pub static TARGET_MAP: Lazy<HashMap<&str, Target>> = Lazy::new(|| {
     HashMap::from([
-        ("rm", (Target::Remove(Remove), "Remove target to recycle bin.")),
-        ("rb", (Target::RecycleBin(RecycleBin), "Recycle bin utils.")),
-        ("mkndir", (Target::MakeNestedDir(MakeNestedDir), "Make a nested dir for each file.")),
-        ("ps", (Target::Process(Process), "Process utils")),
-        ("rn", (Target::Rename(Rename), "Renaming specific pattern in files/links/dirs")),
-        ("lc", (Target::LinkConvert(LinkConvert), "Link converter utils"))
+        ("rm", Target::Remove(Remove)),
+        ("rb", Target::RecycleBin(RecycleBin)),
+        ("mkndir", Target::MakeNestedDir(MakeNestedDir)),
+        ("rn", Target::Rename(Rename)),
+        ("lc", Target::LinkConvert(LinkConvert)),
+        ("ps", Target::Process(Process)),
     ])
 });
-// pub static HELP_DICT: Lazy<HashMap<Target, &str>> = Lazy::new(|| {
-//     HashMap::from([])
-// });
+
+pub static HELP_DICT: Lazy<HashMap<&str, HashMap<&str, &str>>> = Lazy::new(|| {
+    HashMap::from([
+        ("Use Hina recycle bin to remove/restore files", HashMap::from([
+            ("rm", "Remove target to recycle bin."),
+            ("rb", "Operations on Hina recycle bin, list bin/restore/etc.")
+        ])),
+        ("Hina operations on filesystem", HashMap::from([
+            ("mkndir", "Make nested directories for each single file."),
+            ("rn", "Batch renaming function, can also rename symbol links by set -s."),
+            ("lc", "Link convertor, can convert symlink to hardlink and can also revert it.")
+        ])),
+        ("Powerful process utils", HashMap::from([
+            ("ps", "Advanced process checker, can see swap/pss/rss utilization and track process ancestor."),
+        ])),
+    ])
+});
 pub static DATA_DIR: &str = ".hina";
 pub static RM_STACK: &str = "rm.stack";
 pub static RECYCLE: &str = "RecycleBin";

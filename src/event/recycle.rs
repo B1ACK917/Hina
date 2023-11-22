@@ -65,7 +65,13 @@ impl HinaModuleRun for RecycleBin {
         let _list = _flags.parse_bool(vec!["ls", "list"]);
         let _restore = _flags.parse_bool(vec!["rs", "restore"]);
         let _empty = _flags.parse_bool(vec!["ept", "empty"]);
-        if _list { RecycleBin::show(_rm_stack)? }
+        let _help = _flags.parse_bool(vec!["help"]);
+        if _help {
+            RecycleBin::print_help()?;
+        }
+        if _list {
+            RecycleBin::show(_rm_stack)?
+        }
         if _restore {
             RecycleBin::show(_rm_stack)?;
             let mut input = String::new();
@@ -81,6 +87,10 @@ impl HinaModuleRun for RecycleBin {
 }
 
 impl RecycleBin {
+    fn print_help() -> Result<(), HinaError> {
+        Ok(())
+    }
+
     fn show(rm_stack: &Vec<RMRecord>) -> Result<(), HinaError> {
         debug_fn!(rm_stack);
         for (i, record) in rm_stack.iter().enumerate() {
