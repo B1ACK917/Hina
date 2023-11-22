@@ -4,7 +4,7 @@ MAN_DIR = man
 MAN_FILES = $(wildcard $(MAN_DIR)/*.man)
 GZ_FILES = $(patsubst $(MAN_DIR)/%.man,$(MAN_DIR)/%.1,$(MAN_FILES))
 
-default: build
+default: build man
 
 ifeq ($(shell command -v cargo 2> /dev/null),)
     $(error "cargo is not installed.")
@@ -31,6 +31,7 @@ build:
 	@cargo build --release
 
 man: $(GZ_FILES)
+	@echo "Manual generated"
 
 $(MAN_DIR)/%.1: $(MAN_DIR)/%.man
 	gzip -c $< > $@
@@ -39,11 +40,14 @@ $(MAN_DIR)/%.1: $(MAN_DIR)/%.man
 install: build man
 	@echo "Installing executable target"
 	@cp target/release/$(NAME) $(PREFIX)/bin
+	@echo "Executable file installed to $(PREFIX)/bin/$(NAME)"
 	@echo "Installing manual"
 	@cp man/*.1 $(PREFIX)/share/man/man1
+	@echo "Manual installed to $(PREFIX)/share/man/man1"
 
 uninstall:
 	@echo "Removing executable target"
 	@rm $(PREFIX)/bin/$(NAME)
 	@echo "Removing manual"
 	@rm $(PREFIX)/share/man/man1/hina*
+	@echo "Successfully uninstalled Hina."
