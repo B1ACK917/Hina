@@ -6,10 +6,6 @@ GZ_FILES = $(patsubst $(MAN_DIR)/%.man,$(MAN_DIR)/%.1,$(MAN_FILES))
 
 default: build man
 
-ifeq ($(shell command -v cargo 2> /dev/null),)
-    $(error "cargo is not installed.")
-endif
-
 clean:
 	@echo "Cleaning build dir"
 	@rm -rf target/*
