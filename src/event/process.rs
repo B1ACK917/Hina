@@ -8,7 +8,7 @@ use std::string::ToString;
 use crate::{debug_fn, debug_var, debugln};
 use crate::core::config::{Flag, RMRecord};
 use crate::core::error::HinaError;
-use crate::core::func::{execute_command, print_info, split_and_remove_blank};
+use crate::core::func::{execute_command, execute_command_in_terminal, print_info, split_and_remove_blank};
 use crate::core::global::{DEBUG, MEM_EXTRACT_RE};
 use crate::event::base::HinaModuleRun;
 
@@ -164,6 +164,11 @@ impl HinaModuleRun for Process {
            _arg_num: usize,
     ) -> Result<(), HinaError> {
         debug_fn!(_work_path,_data_path,_recycle_path,_user,_uid,_flags,_rm_stack,_target,_arg_num);
+        let _help = _flags.parse_bool(vec!["help"]);
+        if _help {
+            Process::print_help()?;
+            return Ok(());
+        }
         let spec_pattern = _flags.parse_string(vec!["i", "input"]);
         let ans_id = _flags.parse_uint(vec!["t", "track"]);
         let dump = _flags.parse_bool(vec!["d", "dump"]);
@@ -199,6 +204,12 @@ impl HinaModuleRun for Process {
 }
 
 impl Process {
+    fn print_help() -> Result<(), HinaError> {
+        debug_fn!();
+        execute_command_in_terminal("man", vec!["hina-ps"])?;
+        Ok(())
+    }
+
     fn get_all_process() -> Result<Vec<ProcessInfo>, HinaError> {
         debug_fn!();
         let command = format!("ps -ef | sed -n '2,$p'");

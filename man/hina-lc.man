@@ -1,0 +1,59 @@
+.TH hina-lc 1 "November 2023" "hina-lc Manual"
+
+.SH NAME
+hina-lc \- Convert symbolic links to hard links or hard links to symbolic links
+
+.SH SYNOPSIS
+.B hina lc
+[\fIPATH\fR]
+[\fIOPTIONS\fR]
+
+.SH DESCRIPTION
+The \fBhina lc\fR command is used to convert symbolic links to hard links or hard links to symbolic links in the specified path.
+
+.PP
+If no path is provided, the command is executed in the current directory.
+
+.PP
+The following options are available:
+
+.TP
+.BR \-\-s2l
+Convert all symbolic links in the specified path to hard links. Skips links with nonexistent source files.
+
+.TP
+.BR \-\-l2s
+Convert all hard links in the specified path to symbolic links. Requires \-\-input for searching source paths.
+
+.TP
+.BR \-i=\fIINPUT_PATH\fR, \-\-input=\fIINPUT_PATH\fR
+Specify the search path for converting hard links to symbolic links, if not specified, this will be set to /.
+
+.TP
+.BR \-r, \-\-recursive
+Convert links recursively in subdirectories.
+
+.SH ARGUMENTS
+.TP
+.BR \fIPATH\fR
+The path to the directory containing links to be converted.
+
+.SH EXAMPLES
+Convert symbolic links to hard links in the current directory:
+.BR hina\ lc\ \-\-s2l
+
+Convert hard links to symbolic links in the current directory with a specified input path:
+.BR hina\ lc\ \-\-l2s\ \-i=\fIINPUT_PATH\fR
+
+Convert symbolic links to hard links recursively in subdirectories:
+.BR hina\ lc\ \-\-s2l\ \-r
+
+.SH SEE ALSO
+.BR hina (1)
+
+.SH AUTHOR
+Written by B1ACK917.
+
+.SH REPORTING BUGS
+Report bugs to: 
+.BR https://github.com/B1ACK917/Hina/issues

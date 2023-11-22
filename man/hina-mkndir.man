@@ -1,0 +1,47 @@
+.TH hina-mkndir 1 "November 2023" "hina-mkndir Manual"
+
+.SH NAME
+hina-mkndir \- Create nested directories for each file in the specified path
+
+.SH SYNOPSIS
+.B hina mkndir
+[\fIPATH\fR]
+[\fIOPTIONS\fR]
+
+.SH DESCRIPTION
+The \fBhina mkndir\fR command is used to create nested directories for each file in the specified path.
+
+.PP
+If no path is provided, the command is executed in the current directory.
+
+.PP
+The following option is available:
+
+.TP
+.BR \-r, \-\-recursive
+Create nested directories recursively for files in subdirectories.
+
+.SH ARGUMENTS
+.TP
+.BR \fIPATH\fR
+The path to the directory containing files for which nested directories will be created.
+
+.SH EXAMPLES
+Create nested directories for files in the current directory:
+.BR hina\ mkndir
+
+Create nested directories for files in the specified directory:
+.BR hina\ mkndir\ \fIPATH\fR
+
+Create nested directories recursively for files in subdirectories:
+.BR hina\ mkndir\ \-r\ \fIPATH\fR
+
+.SH SEE ALSO
+.BR hina (1)
+
+.SH AUTHOR
+Written by B1ACK917.
+
+.SH REPORTING BUGS
+Report bugs to:
+.BR https://github.com/B1ACK917/Hina/issues

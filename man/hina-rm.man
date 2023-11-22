@@ -1,0 +1,36 @@
+.TH hina-rm 1 "November 2023" "hina-rm Manual"
+
+.SH NAME
+hina-rm \- Move a file or directory to the recycle bin in hina
+
+.SH SYNOPSIS
+.B hina rm
+[\fIPATH\fR]
+
+.SH DESCRIPTION
+The \fBhina rm\fR command is used to move a file or directory to the recycle bin in the hina program.
+
+.PP
+Only the following argument is accepted:
+
+.TP
+.BR \fIPATH\fR
+The path to the file or directory to be moved to the recycle bin.
+
+.SH EXAMPLES
+Move a file to the recycle bin:
+.BR hina\ rm\ \fIFILE_PATH\fR
+
+Move a directory to the recycle bin:
+.BR hina\ rm\ \fIDIRECTORY_PATH\fR
+
+.SH SEE ALSO
+.BR hina (1)
+.BR hina-rb (1)
+
+.SH AUTHOR
+Written by B1ACK917.
+
+.SH REPORTING BUGS
+Report bugs to:
+.BR https://github.com/B1ACK917/Hina/issues

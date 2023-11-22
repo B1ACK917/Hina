@@ -1,3 +1,4 @@
-/target
+/target/
 /proc/
 /asset/
+/man/*.1

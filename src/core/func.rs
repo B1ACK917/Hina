@@ -4,7 +4,7 @@ use std::fs;
 use std::fs::{File, OpenOptions};
 use std::io::{BufReader, BufWriter};
 use std::path::PathBuf;
-use std::process::Stdio;
+use std::process::{Command, Stdio};
 
 use execute::{Execute, shell};
 use rand::{Rng, thread_rng};
@@ -86,6 +86,26 @@ pub fn execute_command(input: &String) -> Result<String, HinaError> {
     match String::from_utf8(command_out_utf_8) {
         Ok(output) => { Ok(output) }
         Err(err) => { Err(HinaError::CommandParseError(err.to_string())) }
+    }
+}
+
+pub fn execute_command_in_terminal(cmd: &str, args: Vec<&str>) -> Result<(), HinaError> {
+    // Execute a command with interactive
+    debug_fn!(cmd,args);
+    let mut cmd = Command::new(cmd);
+    cmd.args(args);
+
+    cmd.stdin(Stdio::inherit());
+    cmd.stdout(Stdio::inherit());
+    cmd.stderr(Stdio::inherit());
+
+    let mut child = cmd.spawn().expect("Failed to execute command");
+    let status = child.wait().expect("Failed to wait for command");
+
+    if status.success() {
+        Ok(())
+    } else {
+        Err(HinaError::CommandExecError(String::new()))
     }
 }
 

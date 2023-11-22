@@ -8,6 +8,7 @@ use crate::core::config::{Flag, RMRecord};
 use crate::core::error::HinaError;
 use crate::core::error::HinaError::{FileExistError, OutOfIndexError};
 use crate::core::func;
+use crate::core::func::execute_command_in_terminal;
 use crate::core::global::RAND_STR_LEN;
 use crate::event::base::HinaModuleRun;
 
@@ -30,6 +31,11 @@ impl HinaModuleRun for Remove {
            _arg_num: usize,
     ) -> Result<(), HinaError> {
         debug_fn!(_work_path,_data_path,_recycle_path,_user,_uid,_flags,_rm_stack,_target,_arg_num);
+        let _help = _flags.parse_bool(vec!["help"]);
+        if _help {
+            Remove::print_help()?;
+            return Ok(());
+        }
         if _arg_num < 1 {
             return Ok(());
         }
@@ -45,6 +51,14 @@ impl HinaModuleRun for Remove {
             _target.display().to_string(),
             now.format("%Y-%m-%d %H:%M:%S%.3f").to_string(),
         ));
+        Ok(())
+    }
+}
+
+impl Remove {
+    fn print_help() -> Result<(), HinaError> {
+        debug_fn!();
+        execute_command_in_terminal("man", vec!["hina-rm"])?;
         Ok(())
     }
 }
@@ -68,6 +82,7 @@ impl HinaModuleRun for RecycleBin {
         let _help = _flags.parse_bool(vec!["help"]);
         if _help {
             RecycleBin::print_help()?;
+            return Ok(());
         }
         if _list {
             RecycleBin::show(_rm_stack)?
@@ -88,6 +103,8 @@ impl HinaModuleRun for RecycleBin {
 
 impl RecycleBin {
     fn print_help() -> Result<(), HinaError> {
+        debug_fn!();
+        execute_command_in_terminal("man", vec!["hina-rb"])?;
         Ok(())
     }
 

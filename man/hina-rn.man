@@ -1,0 +1,70 @@
+.TH hina-rn 1 "November 2023" "hina-rn Manual"
+
+.SH NAME
+hina-rn \- Batch rename files or symbolic links in the specified path
+
+.SH SYNOPSIS
+.B hina rn
+[\fIPATH\fR]
+[\fIOPTIONS\fR]
+
+.SH DESCRIPTION
+The \fBhina rn\fR command is used to batch rename files or symbolic links in the specified path.
+
+.PP
+If no path is provided, the command is executed in the current directory.
+
+.PP
+The following options are available:
+
+.TP
+.BR \-i, \-\-input=\fIINPUT_PATTERN\fR
+Specify the input pattern for renaming. Files matching this pattern will be renamed.
+
+.TP
+.BR \-o, \-\-output=\fIOUTPUT_PATTERN\fR
+Specify the output pattern for renaming. Files will be renamed to match this pattern.
+
+.TP
+.BR \-a, \-\-append=\fIAPPEND_STRING\fR
+Specify the string to append during renaming.
+
+.TP
+.BR \-n, \-\-num=\fINUM_POSITION\fR
+Specify the position for appending the string. 0 for prefix.
+
+.TP
+.BR \-r, \-\-recursive
+Batch rename files recursively in subdirectories.
+
+.TP
+.BR \-s, \-\-symlink
+Batch rename symbolic links. Modifies the symbolic link itself, not the target file.
+
+.SH ARGUMENTS
+.TP
+.BR \fIPATH\fR
+The path to the directory containing files or symbolic links to be renamed.
+
+.SH EXAMPLES
+Batch rename files in the current directory:
+.BR hina\ rn\ \-i=\fIINPUT_PATTERN\fR\ \-o=\fIOUTPUT_PATTERN\fR
+
+Batch rename files in the specified directory:
+.BR hina\ rn\ \fIPATH\fR\ \-i=\fIINPUT_PATTERN\fR\ \-o=\fIOUTPUT_PATTERN\fR
+
+Batch rename files recursively in subdirectories:
+.BR hina\ rn\ \-r\ \fIPATH\fR\ \-i=\fIINPUT_PATTERN\fR\ \-o=\fIOUTPUT_PATTERN\fR
+
+Batch rename symbolic links:
+.BR hina\ rn\ \-s\ \fIPATH\fR\ \-i=\fIINPUT_PATTERN\fR\ \-o=\fIOUTPUT_PATTERN\fR
+
+.SH SEE ALSO
+.BR hina (1)
+
+.SH AUTHOR
+Written by B1ACK917.
+
+.SH REPORTING BUGS
+Report bugs to: 
+.BR https://github.com/B1ACK917/Hina/issues

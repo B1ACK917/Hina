@@ -3,6 +3,7 @@ use std::env;
 
 use once_cell::sync::Lazy;
 use regex::Regex;
+use indexmap::IndexMap;
 
 use crate::core::config::Target;
 use crate::event::fs::{LinkConvert, MakeNestedDir, Rename};
@@ -26,18 +27,18 @@ pub static TARGET_MAP: Lazy<HashMap<&str, Target>> = Lazy::new(|| {
     ])
 });
 
-pub static HELP_DICT: Lazy<HashMap<&str, HashMap<&str, &str>>> = Lazy::new(|| {
-    HashMap::from([
-        ("Use Hina recycle bin to remove/restore files", HashMap::from([
+pub static HELP_DICT: Lazy<IndexMap<&str, IndexMap<&str, &str>>> = Lazy::new(|| {
+    IndexMap::from([
+        ("Use Hina recycle bin to remove/restore files", IndexMap::from([
             ("rm", "Remove target to recycle bin."),
             ("rb", "Operations on Hina recycle bin, list bin/restore/etc.")
         ])),
-        ("Hina operations on filesystem", HashMap::from([
+        ("Hina operations on filesystem", IndexMap::from([
             ("mkndir", "Make nested directories for each single file."),
             ("rn", "Batch renaming function, can also rename symbol links by set -s."),
             ("lc", "Link convertor, can convert symlink to hardlink and can also revert it.")
         ])),
-        ("Powerful process utils", HashMap::from([
+        ("Powerful process utils", IndexMap::from([
             ("ps", "Advanced process checker, can see swap/pss/rss utilization and track process ancestor."),
         ])),
     ])

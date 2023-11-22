@@ -1,0 +1,80 @@
+.TH hina 1 "November 2023" "hina Manual"
+
+.SH NAME
+hina \- A utility for managing files and processes
+
+.SH SYNOPSIS
+.B hina
+[\fICOMMAND\fR]
+[\fICOMMAND_OPTIONS\fR]
+
+.SH DESCRIPTION
+The \fBhina\fR command provides a set of utilities for managing files and processes.
+
+.PP
+The following commands are available:
+
+.TP
+.BR rm\ \-\ Remove\ files\ or\ directories.
+
+.TP
+.BR rb\ \-\ Manage\ recycle\ bin.
+
+.TP
+.BR mkndir\ \-\ Create\ nested\ directories\ for\ each\ file.
+
+.TP
+.BR rn\ \-\ Batch\ rename\ files\ or\ symbolic\ links.
+
+.TP
+.BR lc\ \-\ Convert\ symbolic\ links\ to\ hard\ links\ or\ vice\ versa.
+
+.TP
+.BR ps\ \-\ Advanced\ process\ listing\ utility.
+
+.PP
+For detailed information on each command, refer to their respective manual pages.
+
+.SH COMMANDS
+.TP
+.BR hina\ rm
+[\fIPATH\fR]
+[\fIRMOPTIONS\fR]
+
+.TP
+.BR hina\ rb
+[\fIRBOPTIONS\fR]
+
+.TP
+.BR hina\ mkndir
+[\fIPATH\fR]
+[\fIMKNOPTIONS\fR]
+
+.TP
+.BR hina\ rn
+[\fIPATH\fR]
+[\fIRNOPTIONS\fR]
+
+.TP
+.BR hina\ lc
+[\fIPATH\fR]
+[\fILCOPTIONS\fR]
+
+.TP
+.BR hina\ ps
+[\fIPSOPTIONS\fR]
+
+.SH SEE ALSO
+.BR hina-rm (1),
+.BR hina-rb (1),
+.BR hina-mkndir (1),
+.BR hina-rn (1),
+.BR hina-lc (1),
+.BR hina-ps (1)
+
+.SH AUTHOR
+Written by B1ACK917.
+
+.SH REPORTING BUGS
+Report bugs to:
+.BR https://github.com/B1ACK917/Hina/issues

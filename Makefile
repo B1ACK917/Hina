@@ -1,6 +1,8 @@
-NAME=hina
-EXEC=hina
-PREFIX=/usr/local
+NAME = hina
+PREFIX = /usr/local
+MAN_DIR = man
+MAN_FILES = $(wildcard $(MAN_DIR)/*.man)
+GZ_FILES = $(patsubst $(MAN_DIR)/%.man,$(MAN_DIR)/%.1,$(MAN_FILES))
 
 default: build
 
@@ -13,15 +15,35 @@ clean:
 	@rm -rf target/*
 	@echo "Cleaning using cargo"
 	@cargo clean
+	@echo "Cleaning man dir"
+	@rm man/*.1
+
 check:
 	@echo "Checking $(NAME)"
 	@cargo check
-build:
-	@echo "Building release"
-	@cargo build --release
+
 run:
 	@echo "Running debug"
 	@cargo run
-install: build
-	@echo "Installing release: $(VERSION)"
-	@cp target/release/$(EXEC) $(PREFIX)/bin
+
+build:
+	@echo "Building release"
+	@cargo build --release
+
+man: $(GZ_FILES)
+
+$(MAN_DIR)/%.1: $(MAN_DIR)/%.man
+	gzip -c $< > $@
+	@echo "Compressed: $@"
+
+install: build man
+	@echo "Installing executable target"
+	@cp target/release/$(NAME) $(PREFIX)/bin
+	@echo "Installing manual"
+	@cp man/*.1 $(PREFIX)/share/man/man1
+
+uninstall:
+	@echo "Removing executable target"
+	@rm $(PREFIX)/bin/$(NAME)
+	@echo "Removing manual"
+	@rm $(PREFIX)/share/man/man1/hina*

@@ -6,7 +6,7 @@ use crate::{debug_fn, debugln};
 use crate::core::config::{Flag, RMRecord};
 use crate::core::error::HinaError;
 use crate::core::error::HinaError::DirReadError;
-use crate::core::func::{execute_command, get_execute_target, split_and_remove_blank};
+use crate::core::func::{execute_command, execute_command_in_terminal, get_execute_target, split_and_remove_blank};
 use crate::core::global::{DEBUG, MAX_RECURSIVE_DEPTH};
 use crate::event::base::HinaModuleRun;
 
@@ -32,6 +32,11 @@ impl HinaModuleRun for MakeNestedDir {
            _arg_num: usize,
     ) -> Result<(), HinaError> {
         debug_fn!(_work_path,_data_path,_recycle_path,_user,_uid,_flags,_rm_stack,_target,_arg_num);
+        let _help = _flags.parse_bool(vec!["help"]);
+        if _help {
+            MakeNestedDir::print_help()?;
+            return Ok(());
+        }
         let recursive = _flags.parse_bool(vec!["r", "recursive"]);
         MakeNestedDir::make_nested_dir(_target, recursive)?;
         Ok(())
@@ -39,6 +44,12 @@ impl HinaModuleRun for MakeNestedDir {
 }
 
 impl MakeNestedDir {
+    fn print_help() -> Result<(), HinaError> {
+        debug_fn!();
+        execute_command_in_terminal("man", vec!["hina-mkndir"])?;
+        Ok(())
+    }
+
     fn make_nested_dir_recursive(cur_path: &PathBuf,
                                  cur_depth: usize,
                                  max_depth: usize) -> Result<(), HinaError> {
@@ -105,10 +116,15 @@ impl HinaModuleRun for Rename {
            _arg_num: usize,
     ) -> Result<(), HinaError> {
         debug_fn!(_work_path,_data_path,_recycle_path,_user,_uid,_flags,_rm_stack,_target,_arg_num);
+        let _help = _flags.parse_bool(vec!["help"]);
+        if _help {
+            Rename::print_help()?;
+            return Ok(());
+        }
         let in_str = _flags.parse_string(vec!["i", "input"]);
         let out_str = _flags.parse_string(vec!["o", "output"]);
         let append_str = _flags.parse_string(vec!["a", "append"]);
-        let num = _flags.parse_uint(vec!["n"]);
+        let num = _flags.parse_uint(vec!["n", "num"]);
         let recursive = _flags.parse_bool(vec!["r", "recursive"]);
         let rename_sym = _flags.parse_bool(vec!["s", "symlink"]);
         Rename::rename(_target, &in_str, &out_str, &append_str, num, recursive, rename_sym)?;
@@ -117,6 +133,12 @@ impl HinaModuleRun for Rename {
 }
 
 impl Rename {
+    fn print_help() -> Result<(), HinaError> {
+        debug_fn!();
+        execute_command_in_terminal("man", vec!["hina-rn"])?;
+        Ok(())
+    }
+
     fn rename_string(name: &String,
                      in_str: &String,
                      out_str: &String,
@@ -214,6 +236,11 @@ impl HinaModuleRun for LinkConvert {
            _arg_num: usize,
     ) -> Result<(), HinaError> {
         debug_fn!(_work_path,_data_path,_recycle_path,_user,_uid,_flags,_rm_stack,_target,_arg_num);
+        let _help = _flags.parse_bool(vec!["help"]);
+        if _help {
+            LinkConvert::print_help()?;
+            return Ok(());
+        }
         let s2l = _flags.parse_bool(vec!["s2l"]);
         let l2s = _flags.parse_bool(vec!["l2s"]);
         let recursive = _flags.parse_bool(vec!["r", "recursive"]);
@@ -229,6 +256,12 @@ impl HinaModuleRun for LinkConvert {
 }
 
 impl LinkConvert {
+    fn print_help() -> Result<(), HinaError> {
+        debug_fn!();
+        execute_command_in_terminal("man", vec!["hina-lc"])?;
+        Ok(())
+    }
+
     fn symlink_to_link(filepath: &PathBuf, cur_path: &PathBuf) -> Result<(), HinaError> {
         debug_fn!(filepath,cur_path);
         if filepath.is_symlink() {

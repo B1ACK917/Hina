@@ -1,0 +1,46 @@
+.TH hina-rb 1 "November 2023" "hina-rb Manual"
+
+.SH NAME
+hina-rb \- Manage recycle bin in hina
+
+.SH SYNOPSIS
+.B hina rb
+[\fIOPTION\fR]
+
+.SH DESCRIPTION
+The \fBhina rb\fR command is used to manage the recycle bin in the hina program.
+
+.PP
+The following options are available:
+
+.TP
+.BR \-ls, \-\-list
+List the contents of the recycle bin.
+
+.TP
+.BR \-rs, \-\-restore
+Restore a specific file from the recycle bin.
+
+.TP
+.BR \-ept, \-\-empty
+Empty the recycle bin, permanently deleting all contents.
+
+.SH EXAMPLES
+List recycle bin contents:
+.BR hina\ rb\ \-ls
+
+Restore a file from the recycle bin:
+.BR hina\ rb\ \-rs
+
+Empty the recycle bin:
+.BR hina\ rb\ \-ept
+
+.SH SEE ALSO
+.BR hina (1)
+
+.SH AUTHOR
+Written by B1ACK917.
+
+.SH REPORTING BUGS
+Report bugs to:
+.BR https://github.com/B1ACK917/Hina/issues

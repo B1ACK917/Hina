@@ -1,0 +1,76 @@
+.TH hina-ps 1 "November 2023" "hina-ps Manual"
+
+.SH NAME
+hina-ps \- Advanced process listing utility
+
+.SH SYNOPSIS
+.B hina ps
+[\fIPATH\fR]
+[\fIOPTIONS\fR]
+
+.SH DESCRIPTION
+The \fBhina ps\fR command is an advanced process listing utility similar to the ps command.
+
+.PP
+If no options or path are provided, the command filters and displays processes for the current user.
+
+.PP
+The following options are available:
+
+.TP
+.BR \-i=\fIINPUT_PATTERN\fR, \-\-input=\fIINPUT_PATTERN\fR
+Filter processes by command containing the specified input pattern.
+
+.TP
+.BR \-t=\fIPID\fR, \-\-track=\fIPID\fR
+Display the hierarchy of processes for the specified process ID.
+
+.TP
+.BR \-d, \-\-dump[\fIPATH\fR]
+Dump detailed memory usage information for all processes. If \fIPATH\fR is provided, dumps to the specified folder, otherwise dumps to the 'proc' folder in the current directory.
+
+.TP
+.BR \-x, \-\-x-ray
+Display detailed memory usage information including Swap, USS, PSS, and Size.
+
+.TP
+.BR \-s=\fISORT_FIELD\fR, \-\-sort-by=\fISORT_FIELD\fR
+Sort detailed memory usage information by the specified field. Options: [swap, uss, pss, size, pid].
+
+.TP
+.BR \-h, \-\-human-readable
+Display memory usage information in human-readable units.
+
+.SH ARGUMENTS
+.TP
+.BR \fIPATH\fR
+The path to the directory for dumping detailed memory usage information.
+
+.SH EXAMPLES
+Display processes for the current user:
+.BR hina\ ps
+
+Filter processes by command pattern:
+.BR hina\ ps\ \-i=\fIINPUT_PATTERN\fR
+
+Display hierarchy of processes for a specific PID:
+.BR hina\ ps\ \-t=\fIPID\fR
+
+Dump detailed memory usage information to the current directory:
+.BR hina\ ps\ \-d
+
+Dump detailed memory usage information to a specific path:
+.BR hina\ ps\ \-d\ \fIPATH\fR
+
+Display detailed memory usage information with sorting and human-readable units:
+.BR hina\ ps\ \-x\ \-s=\fISORT_FIELD\fR\ \-h
+
+.SH SEE ALSO
+.BR ps (1)
+
+.SH AUTHOR
+Written by B1ACK917.
+
+.SH REPORTING BUGS
+Report bugs to: 
+.BR https://github.com/B1ACK917/Hina/issues
