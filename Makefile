@@ -33,7 +33,7 @@ $(MAN_DIR)/%.1: $(MAN_DIR)/%.man
 	gzip -c $< > $@
 	@echo "Compressed: $@"
 
-install: build man
+install:
 	@echo "Installing executable target"
 	@cp target/release/$(NAME) $(PREFIX)/bin
 	@echo "Executable file installed to $(PREFIX)/bin/$(NAME)"
