@@ -75,4 +75,4 @@ uninstall:
 	@echo "Successfully uninstalled Hina."
 EOF
 
-echo "Makefile generated with PREFIX=$PREFIX"
+echo "Makefile generated, use make && sudo make install to install Hina"

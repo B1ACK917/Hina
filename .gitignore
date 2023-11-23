@@ -2,3 +2,4 @@
 /proc/
 /asset/
 /man/*.1
+Makefile
