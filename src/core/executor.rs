@@ -23,7 +23,6 @@ impl Executor {
     pub fn build(config: Config) -> Result<Executor, HinaError> {
         debug_fn!(config);
         let home_path_str = func::get_home()?;
-
         let work_path = func::get_current_path()?;
         let home_path = PathBuf::from(home_path_str);
         let mut data_path = home_path;

@@ -16,6 +16,7 @@ pub static DEBUG: Lazy<bool> = Lazy::new(|| {
         Err(_) => false
     }
 });
+
 pub static MODULE_MAP: Lazy<HashMap<&str, Module>> = Lazy::new(|| {
     HashMap::from([
         ("rm", Module::Remove(Remove)),
@@ -43,6 +44,7 @@ pub static HELP_DICT: Lazy<IndexMap<&str, IndexMap<&str, &str>>> = Lazy::new(|| 
         ])),
     ])
 });
+
 pub static DATA_DIR: &str = ".hina";
 pub static RM_STACK: &str = "rm.stack";
 pub static RECYCLE: &str = "RecycleBin";
@@ -53,7 +55,7 @@ pub static MEM_EXTRACT_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?P<name>\S+)
 #[macro_export]
 macro_rules! debug_info {
     () => {
-        eprint!("[{}][{}]", "DEBUG".green(), format!("{}:{}", file!(), line!()).cyan());
+        eprint!("[{}][{}]", "DEBUG".bright_green(), format!("{}:{}", file!(), line!()).cyan());
     };
 }
 
@@ -63,7 +65,7 @@ macro_rules! debugln {
         if *DEBUG {
             debug_info!();
             eprint!(" ");
-            eprintln!($($arg)*);
+            eprintln!("{}",format!($($arg)*).bright_green());
         }
     }};
 }
@@ -78,10 +80,10 @@ macro_rules! debug_fn {
         let name = type_name_of(f);
         if *DEBUG {
             debug_info!();
-            eprint!(" Calling {}(),", name.strip_suffix("::f").unwrap());
+            eprint!("{}", format!(" Calling {}()",name.strip_suffix("::f").unwrap()).bright_purple());
             $(
                 {
-                    eprint!(" {:?} = {:?}", stringify!($expression), &$expression);
+                    eprint!("{}",format!(" {:?} = {:?}", stringify!($expression), &$expression).bright_yellow());
                 }
             )*
             eprintln!();
@@ -97,7 +99,8 @@ macro_rules! debug_var {
                 {
                     debug_info!();
                     eprint!(" ");
-                    eprint!("{:?} = {:#?}",stringify!($expression),&$expression);
+                    eprint!("{}",format!(" {:#?} = {:#?}", stringify!($expression), &$expression).bright_yellow());
+                    eprintln!();
                 }
             )*
         }
