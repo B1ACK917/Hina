@@ -1,0 +1,78 @@
+#!/bin/bash
+
+# Default values
+PREFIX="/usr/local"
+
+# Parse command line arguments
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --prefix=*)
+      PREFIX="${1#*=}"
+      ;;
+    --help)
+      echo "Usage: ./configure [--prefix=PATH] [--help]"
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $1"
+      echo "Use --help for usage information."
+      exit 1
+      ;;
+  esac
+  shift
+done
+
+# Generate Makefile
+cat > Makefile <<EOF
+NAME = hina
+PREFIX = $PREFIX
+MAN_DIR = man
+MAN_FILES = \$(wildcard \$(MAN_DIR)/*.man)
+GZ_FILES = \$(patsubst \$(MAN_DIR)/%.man,\$(MAN_DIR)/%.1,\$(MAN_FILES))
+
+default: build man
+
+clean:
+	@echo "Cleaning build dir"
+	@rm -rf target/*
+	@echo "Cleaning using cargo"
+	@cargo clean
+	@echo "Cleaning man dir"
+	@rm man/*.1
+
+check:
+	@echo "Checking \$(NAME)"
+	@cargo check
+
+run:
+	@echo "Running debug"
+	@cargo run
+
+build:
+	@echo "Building release"
+	@cargo build --release
+
+man: \$(GZ_FILES)
+	@echo "Manual generated"
+
+\$(MAN_DIR)/%.1: \$(MAN_DIR)/%.man
+	gzip -c \$< > \$@
+	@echo "Compressed: \$@"
+
+install:
+	@echo "Installing executable target"
+	@cp target/release/\$(NAME) \$(PREFIX)/bin
+	@echo "Executable file installed to \$(PREFIX)/bin/\$(NAME)"
+	@echo "Installing manual"
+	@cp man/*.1 \$(PREFIX)/share/man/man1
+	@echo "Manual installed to \$(PREFIX)/share/man/man1"
+
+uninstall:
+	@echo "Removing executable target"
+	@rm \$(PREFIX)/bin/\$(NAME)
+	@echo "Removing manual"
+	@rm \$(PREFIX)/share/man/man1/hina*
+	@echo "Successfully uninstalled Hina."
+EOF
+
+echo "Makefile generated with PREFIX=$PREFIX"
