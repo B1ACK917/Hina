@@ -5,8 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{debug_fn, debug_info};
 use crate::core::error::HinaError;
-use crate::core::global::MODULE_MAP;
-use crate::DEBUG;
+use crate::core::global::{MODULE_MAP, DEBUG};
 use crate::event::fs::{LinkConvert, MakeNestedDir, Rename};
 use crate::event::holder::PlaceHold;
 use crate::event::process::Process;

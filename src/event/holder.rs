@@ -2,10 +2,10 @@ use std::path::PathBuf;
 
 use colored::Colorize;
 
-use crate::{DEBUG, debug_fn, debug_info};
+use crate::{debug_fn, debug_info};
 use crate::core::config::{Flag, RMRecord};
 use crate::core::error::HinaError;
-use crate::core::global::HELP_DICT;
+use crate::core::global::{DEBUG, HELP_DICT};
 use crate::event::base::HinaModuleRun;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]

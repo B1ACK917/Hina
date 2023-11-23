@@ -2,11 +2,11 @@ use std::path::PathBuf;
 
 use colored::Colorize;
 
-use crate::{DEBUG, debug_fn, debug_info};
+use crate::{debug_fn, debug_info};
 use crate::core::config::{Config, Flag, Module, RMRecord};
 use crate::core::error::HinaError;
 use crate::core::func;
-use crate::core::global::{DATA_DIR, RECYCLE};
+use crate::core::global::{DATA_DIR, DEBUG, RECYCLE};
 use crate::event::base::HinaModuleRun;
 
 #[derive(Debug, Clone)]

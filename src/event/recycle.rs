@@ -4,13 +4,13 @@ use std::path::PathBuf;
 use chrono::{DateTime, Local};
 use colored::Colorize;
 
-use crate::{DEBUG, debug_fn, debug_info};
+use crate::{debug_fn, debug_info};
 use crate::core::config::{Flag, RMRecord};
 use crate::core::error::HinaError;
 use crate::core::error::HinaError::{FileExistError, OutOfIndexError};
 use crate::core::func;
 use crate::core::func::{execute_command_in_terminal, get_execute_target, split_and_remove_blank};
-use crate::core::global::RAND_STR_LEN;
+use crate::core::global::{DEBUG, RAND_STR_LEN};
 use crate::event::base::HinaModuleRun;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
