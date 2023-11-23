@@ -2,13 +2,14 @@ use std::io::stdin;
 use std::path::PathBuf;
 
 use chrono::{DateTime, Local};
+use colored::Colorize;
 
-use crate::{DEBUG, debug_fn};
+use crate::{DEBUG, debug_fn, debug_info};
 use crate::core::config::{Flag, RMRecord};
 use crate::core::error::HinaError;
 use crate::core::error::HinaError::{FileExistError, OutOfIndexError};
 use crate::core::func;
-use crate::core::func::execute_command_in_terminal;
+use crate::core::func::{execute_command_in_terminal, get_execute_target, split_and_remove_blank};
 use crate::core::global::RAND_STR_LEN;
 use crate::event::base::HinaModuleRun;
 
@@ -27,30 +28,32 @@ impl HinaModuleRun for Remove {
            _uid: &String,
            _flags: &Flag,
            _rm_stack: &mut Vec<RMRecord>,
-           _target: &PathBuf,
-           _arg_num: usize,
+           _arg: Option<&String>,
     ) -> Result<(), HinaError> {
-        debug_fn!(_work_path,_data_path,_recycle_path,_user,_uid,_flags,_rm_stack,_target,_arg_num);
+        debug_fn!(_work_path,_data_path,_recycle_path,_user,_uid,_flags,_rm_stack,_arg);
         let _help = _flags.parse_bool(vec!["help"]);
         if _help {
             Remove::print_help()?;
             return Ok(());
         }
-        if _arg_num < 1 {
-            return Ok(());
-        }
-        let mut recycle_bin = _recycle_path.clone();
-        let file_name = func::gen_rand_str(RAND_STR_LEN);
-        recycle_bin.push(file_name.clone());
+        match _arg {
+            None => {}
+            Some(arg) => {
+                let remove_target = get_execute_target(_work_path, &PathBuf::from(arg))?;
+                let mut recycle_bin = _recycle_path.clone();
+                let file_name = func::gen_rand_str(RAND_STR_LEN);
+                recycle_bin.push(file_name.clone());
 
-        let command = String::from(format!("mv \"{}\" \"{}\"", _target.display(), recycle_bin.display()));
-        func::execute_command(&command)?;
-        let now: DateTime<Local> = Local::now();
-        _rm_stack.push(RMRecord::from(
-            recycle_bin.display().to_string(),
-            _target.display().to_string(),
-            now.format("%Y-%m-%d %H:%M:%S%.3f").to_string(),
-        ));
+                let command = String::from(format!("mv \"{}\" \"{}\"", remove_target.display(), recycle_bin.display()));
+                func::execute_command(&command)?;
+                let now: DateTime<Local> = Local::now();
+                _rm_stack.push(RMRecord::from(
+                    recycle_bin.display().to_string(),
+                    remove_target.display().to_string(),
+                    now.format("%Y-%m-%d %H:%M:%S%.3f").to_string(),
+                ));
+            }
+        }
         Ok(())
     }
 }
@@ -72,30 +75,28 @@ impl HinaModuleRun for RecycleBin {
            _uid: &String,
            _flags: &Flag,
            _rm_stack: &mut Vec<RMRecord>,
-           _target: &PathBuf,
-           _arg_num: usize,
+           _arg: Option<&String>,
     ) -> Result<(), HinaError> {
-        debug_fn!(_work_path,_data_path,_recycle_path,_user,_uid,_flags,_rm_stack,_target,_arg_num);
-        let _list = _flags.parse_bool(vec!["ls", "list"]);
-        let _restore = _flags.parse_bool(vec!["rs", "restore"]);
-        let _empty = _flags.parse_bool(vec!["ept", "empty"]);
+        debug_fn!(_work_path,_data_path,_recycle_path,_user,_uid,_flags,_rm_stack,_arg);
         let _help = _flags.parse_bool(vec!["help"]);
         if _help {
             RecycleBin::print_help()?;
             return Ok(());
         }
+        let _list = _flags.parse_bool(vec!["ls", "list"]);
+        let _restore = _flags.parse_bool(vec!["rs", "restore"]);
+        let _empty = _flags.parse_bool(vec!["ept", "empty"]);
         if _list {
-            RecycleBin::show(_rm_stack)?
+            RecycleBin::show(_rm_stack)?;
+            return Ok(());
         }
         if _restore {
-            RecycleBin::show(_rm_stack)?;
-            let mut input = String::new();
-            stdin().read_line(&mut input).unwrap();
-            let index: isize = input.trim().parse().unwrap_or(-1);
-            RecycleBin::restore(_rm_stack, index)?
+            RecycleBin::restore(_rm_stack)?;
+            return Ok(());
         }
         if _empty {
-            RecycleBin::empty(_recycle_path, _rm_stack)?
+            RecycleBin::empty(_recycle_path, _rm_stack)?;
+            return Ok(());
         }
         Ok(())
     }
@@ -116,12 +117,42 @@ impl RecycleBin {
         Ok(())
     }
 
-    fn restore(rm_stack: &mut Vec<RMRecord>, index: isize) -> Result<(), HinaError> {
+    fn restore(_rm_stack: &mut Vec<RMRecord>) -> Result<(), HinaError> {
+        debug_fn!(_rm_stack);
+        RecycleBin::show(_rm_stack)?;
+
+        let mut input = String::new();
+        stdin().read_line(&mut input).unwrap();
+
+        let indices_str = split_and_remove_blank(&input, ",")?;
+        let indices: Vec<_> = indices_str
+            .into_iter()
+            .filter_map(|s| s.parse().ok())
+            .collect();
+        let removed: Vec<_> = indices
+            .into_iter()
+            .filter_map(|i| match RecycleBin::restore_index(_rm_stack, i) {
+                Ok(i) => { Some(i) }
+                Err(err) => {
+                    println!("{:?}", err);
+                    None
+                }
+            })
+            .collect();
+        for i in removed.into_iter().rev() {
+            if i < _rm_stack.len() {
+                _rm_stack.remove(i);
+            }
+        }
+        return Ok(());
+    }
+
+    fn restore_index(rm_stack: &Vec<RMRecord>, index: usize) -> Result<usize, HinaError> {
         debug_fn!(rm_stack,index);
-        if index < 0 || index as usize >= rm_stack.len() {
+        if index >= rm_stack.len() {
             return Err(OutOfIndexError(format!("Index {} is out of recycle bin", index)));
         }
-        let record = &rm_stack[index as usize];
+        let record = &rm_stack[index];
         let src = PathBuf::from(record.get_src());
         if src.exists() {
             Err(FileExistError(format!("{} already exists, cannot restore", record.get_src())))
@@ -129,8 +160,7 @@ impl RecycleBin {
             let command = String::from(format!("mv \"{}\" \"{}\"", record.get_file(), record.get_src()));
             func::execute_command(&command)?;
             println!("{} restored", record.get_src());
-            rm_stack.remove(index as usize);
-            Ok(())
+            Ok(index)
         }
     }
 

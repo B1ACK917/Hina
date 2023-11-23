@@ -6,7 +6,7 @@ Hina is a versatile command-line utility for managing files and processes. It pr
 
 ## Table of Contents
 
-- [Installation](#installation)
+- [Installation](#installation-and-uninstallation)
 - [Usage](#usage)
 - [Modules](#modules)
   - [rm - Remove Files or Directories](#rm---remove-files-or-directories-to-recycle-bin)
@@ -21,7 +21,7 @@ Hina is a versatile command-line utility for managing files and processes. It pr
 
 
 
-## Installation
+## Installation and Uninstallation
 
 To install Hina, follow these steps:
 
@@ -32,11 +32,24 @@ git clone https://github.com/B1ACK917/Hina.git
 # Navigate to the Hina directory
 cd Hina
 
-# Compile the Rust code and install the executable & manual for man usage
-# this will install the executable to /usr/local/bin
+# configure to generate Makefile
+# this will set the executable install path to /usr/local/bin
 # and the manual to /usr/local/share/man/man1
-# if you want to customize the installation, change the PREFIX in Makefile
+./configure
+# if you want to customize the installation, use --prefix
+# e.g ./configure --prefix=$HOME/.local
+
+# Compile the Rust code and install the executable & manual for man usage
 make && sudo make install
+```
+
+To uninstall Hina, follow these stops:
+```bash
+# This will remove the executable and manual pages
+sudo make uninstall
+
+# Clean the generated sth. to reduce disk usage
+make clean
 ```
 
 

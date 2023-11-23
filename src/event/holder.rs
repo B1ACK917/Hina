@@ -1,6 +1,8 @@
 use std::path::PathBuf;
 
-use crate::{DEBUG, debug_fn};
+use colored::Colorize;
+
+use crate::{DEBUG, debug_fn, debug_info};
 use crate::core::config::{Flag, RMRecord};
 use crate::core::error::HinaError;
 use crate::core::global::HELP_DICT;
@@ -18,17 +20,18 @@ impl HinaModuleRun for PlaceHold {
            _uid: &String,
            _flags: &Flag,
            _rm_stack: &mut Vec<RMRecord>,
-           _target: &PathBuf,
-           _arg_num: usize,
+           _arg: Option<&String>,
     ) -> Result<(), HinaError> {
-        debug_fn!(_work_path,_data_path,_recycle_path,_user,_uid,_flags,_rm_stack,_target,_arg_num);
+        debug_fn!(_work_path,_data_path,_recycle_path,_user,_uid,_flags,_rm_stack,_arg);
         let help = _flags.parse_bool(vec!["h", "help"]);
         let version = _flags.parse_bool(vec!["v", "version"]);
         if help {
             PlaceHold::print_help()?;
+            return Ok(());
         }
         if version {
             PlaceHold::print_version()?;
+            return Ok(());
         }
         Ok(())
     }

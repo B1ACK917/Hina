@@ -6,11 +6,12 @@ use std::io::{BufReader, BufWriter};
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
+use colored::Colorize;
 use execute::{Execute, shell};
 use rand::{Rng, thread_rng};
 use rand::distributions::Alphanumeric;
 
-use crate::{debug_fn, debugln};
+use crate::{debug_fn, debug_info, debugln};
 use crate::core::config::RMRecord;
 use crate::core::error::HinaError;
 use crate::core::error::HinaError::{DirCreateError, FileCreateError, FileOpenError, FileWriteError};
@@ -65,15 +66,6 @@ pub fn get_uid() -> Result<String, HinaError> {
     Ok(uid)
 }
 
-pub fn parse_args_or(args: &Vec<String>, default: String) -> Vec<String> {
-    debug_fn!(args,default);
-    return if args.len() > 0 {
-        args.clone()
-    } else {
-        vec![default]
-    };
-}
-
 pub fn execute_command(input: &String) -> Result<String, HinaError> {
     // Shell utils, for running a unix shell
     debug_fn!(input);
@@ -106,6 +98,18 @@ pub fn execute_command_in_terminal(cmd: &str, args: Vec<&str>) -> Result<(), Hin
         Ok(())
     } else {
         Err(HinaError::CommandExecError(String::new()))
+    }
+}
+
+pub fn parse_path_or(input_path: Option<&String>, default: &str) -> Result<PathBuf, HinaError> {
+    debug_fn!(input_path,default);
+    match input_path {
+        None => {
+            Ok(PathBuf::from(default))
+        }
+        Some(path) => {
+            Ok(PathBuf::from(path))
+        }
     }
 }
 
@@ -210,13 +214,14 @@ pub fn save_rm_stack(data_path: &PathBuf,
     Ok(())
 }
 
-pub fn split_and_remove_blank(content: &String, pattern: &str) -> Vec<String> {
+pub fn split_and_remove_blank(content: &String, pattern: &str) -> Result<Vec<String>, HinaError> {
     debug_fn!(content,pattern);
-    return content
+    Ok(content
+        .trim()
         .split(pattern)
         .map(|s| s.to_string())
         .filter(|s| !s.is_empty())
-        .collect();
+        .collect())
 }
 
 pub fn gen_rand_str(len: usize) -> String {

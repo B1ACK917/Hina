@@ -2,11 +2,13 @@ use std::fs;
 use std::os::unix::fs::{MetadataExt, symlink};
 use std::path::PathBuf;
 
-use crate::{debug_fn, debugln};
+use colored::Colorize;
+
+use crate::{debug_fn, debug_info, debugln};
 use crate::core::config::{Flag, RMRecord};
 use crate::core::error::HinaError;
 use crate::core::error::HinaError::DirReadError;
-use crate::core::func::{execute_command, execute_command_in_terminal, get_execute_target, split_and_remove_blank};
+use crate::core::func::{execute_command, execute_command_in_terminal, get_execute_target, parse_path_or, split_and_remove_blank};
 use crate::core::global::{DEBUG, MAX_RECURSIVE_DEPTH};
 use crate::event::base::HinaModuleRun;
 
@@ -28,17 +30,18 @@ impl HinaModuleRun for MakeNestedDir {
            _uid: &String,
            _flags: &Flag,
            _rm_stack: &mut Vec<RMRecord>,
-           _target: &PathBuf,
-           _arg_num: usize,
+           _arg: Option<&String>,
     ) -> Result<(), HinaError> {
-        debug_fn!(_work_path,_data_path,_recycle_path,_user,_uid,_flags,_rm_stack,_target,_arg_num);
+        debug_fn!(_work_path,_data_path,_recycle_path,_user,_uid,_flags,_rm_stack,_arg);
         let _help = _flags.parse_bool(vec!["help"]);
         if _help {
             MakeNestedDir::print_help()?;
             return Ok(());
         }
         let recursive = _flags.parse_bool(vec!["r", "recursive"]);
-        MakeNestedDir::make_nested_dir(_target, recursive)?;
+
+        let target = get_execute_target(_work_path, &parse_path_or(_arg, ".")?)?;
+        MakeNestedDir::make_nested_dir(&target, recursive)?;
         Ok(())
     }
 }
@@ -112,10 +115,9 @@ impl HinaModuleRun for Rename {
            _uid: &String,
            _flags: &Flag,
            _rm_stack: &mut Vec<RMRecord>,
-           _target: &PathBuf,
-           _arg_num: usize,
+           _arg: Option<&String>,
     ) -> Result<(), HinaError> {
-        debug_fn!(_work_path,_data_path,_recycle_path,_user,_uid,_flags,_rm_stack,_target,_arg_num);
+        debug_fn!(_work_path,_data_path,_recycle_path,_user,_uid,_flags,_rm_stack,_arg);
         let _help = _flags.parse_bool(vec!["help"]);
         if _help {
             Rename::print_help()?;
@@ -127,7 +129,9 @@ impl HinaModuleRun for Rename {
         let num = _flags.parse_uint(vec!["n", "num"]);
         let recursive = _flags.parse_bool(vec!["r", "recursive"]);
         let rename_sym = _flags.parse_bool(vec!["s", "symlink"]);
-        Rename::rename(_target, &in_str, &out_str, &append_str, num, recursive, rename_sym)?;
+
+        let target = get_execute_target(_work_path, &parse_path_or(_arg, ".")?)?;
+        Rename::rename(&target, &in_str, &out_str, &append_str, num, recursive, rename_sym)?;
         Ok(())
     }
 }
@@ -232,10 +236,9 @@ impl HinaModuleRun for LinkConvert {
            _uid: &String,
            _flags: &Flag,
            _rm_stack: &mut Vec<RMRecord>,
-           _target: &PathBuf,
-           _arg_num: usize,
+           _arg: Option<&String>,
     ) -> Result<(), HinaError> {
-        debug_fn!(_work_path,_data_path,_recycle_path,_user,_uid,_flags,_rm_stack,_target,_arg_num);
+        debug_fn!(_work_path,_data_path,_recycle_path,_user,_uid,_flags,_rm_stack,_arg);
         let _help = _flags.parse_bool(vec!["help"]);
         if _help {
             LinkConvert::print_help()?;
@@ -246,10 +249,12 @@ impl HinaModuleRun for LinkConvert {
         let recursive = _flags.parse_bool(vec!["r", "recursive"]);
         let input = PathBuf::from(_flags.parse_string(vec!["i", "input"]));
         let src_path = get_execute_target(_work_path, &input)?;
+
+        let target = get_execute_target(_work_path, &parse_path_or(_arg, ".")?)?;
         if s2l {
-            LinkConvert::convert(_target, &src_path, 0, recursive)?;
+            LinkConvert::convert(&target, &src_path, 0, recursive)?;
         } else if l2s {
-            LinkConvert::convert(_target, &src_path, 1, recursive)?;
+            LinkConvert::convert(&target, &src_path, 1, recursive)?;
         }
         Ok(())
     }
@@ -287,7 +292,7 @@ impl LinkConvert {
         let inode = meta.ino();
         let command = String::from(format!("find {} -inum {}", src_path.display(), inode));
         let find_str = execute_command(&command)?;
-        let file_src_list = split_and_remove_blank(&find_str, "\n");
+        let file_src_list = split_and_remove_blank(&find_str, "\n")?;
         if file_src_list.len() == 1 {
             let file_src = &file_src_list[0];
             fs::remove_file(filepath).unwrap();

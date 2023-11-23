@@ -1,18 +1,19 @@
 use std::collections::HashMap;
 
+use colored::Colorize;
 use serde::{Deserialize, Serialize};
 
+use crate::{debug_fn, debug_info};
 use crate::core::error::HinaError;
-use crate::core::global::TARGET_MAP;
+use crate::core::global::MODULE_MAP;
 use crate::DEBUG;
-use crate::debug_fn;
 use crate::event::fs::{LinkConvert, MakeNestedDir, Rename};
 use crate::event::holder::PlaceHold;
 use crate::event::process::Process;
 use crate::event::recycle::{RecycleBin, Remove};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub enum Target {
+pub enum Module {
     Remove(Remove),
     RecycleBin(RecycleBin),
     MakeNestedDir(MakeNestedDir),
@@ -29,7 +30,7 @@ pub struct Flag {
 
 #[derive(Debug, Clone)]
 pub struct Config {
-    target: Target,
+    module: Module,
     args: Vec<String>,
     flags: Flag,
 }
@@ -90,16 +91,16 @@ impl Config {
         let index;
         let need_parse;
         if input.len() < 2 {
-            target = Target::None(PlaceHold);
+            target = Module::None(PlaceHold);
             need_parse = false;
             index = 0;
         } else if input.len() == 2 {
             if input[1].starts_with("-") {
-                target = Target::None(PlaceHold);
+                target = Module::None(PlaceHold);
                 need_parse = true;
                 index = 1;
-            } else if TARGET_MAP.contains_key(input[1].as_str()) {
-                target = TARGET_MAP[input[1].as_str()].clone();
+            } else if MODULE_MAP.contains_key(input[1].as_str()) {
+                target = MODULE_MAP[input[1].as_str()].clone();
                 need_parse = false;
                 index = 0;
             } else {
@@ -107,8 +108,8 @@ impl Config {
                 return Err(HinaError::ConfigParseError(err));
             }
         } else {
-            if TARGET_MAP.contains_key(input[1].as_str()) {
-                target = TARGET_MAP[input[1].as_str()].clone();
+            if MODULE_MAP.contains_key(input[1].as_str()) {
+                target = MODULE_MAP[input[1].as_str()].clone();
                 need_parse = true;
                 index = 2;
             } else {
@@ -126,16 +127,16 @@ impl Config {
 
         let (flags, args) = Config::parse_flag_and_arg(&mut args_or_flags);
         let config = Config {
-            target,
+            module: target,
             args,
             flags: Flag { flags },
         };
         return Ok(config);
     }
 
-    pub fn get_target(&self) -> &Target {
+    pub fn get_target(&self) -> &Module {
         debug_fn!();
-        return &self.target;
+        return &self.module;
     }
 
     pub fn get_args(&self) -> &Vec<String> {

@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 use std::env;
 
+use indexmap::IndexMap;
 use once_cell::sync::Lazy;
 use regex::Regex;
-use indexmap::IndexMap;
 
-use crate::core::config::Target;
+use crate::core::config::Module;
 use crate::event::fs::{LinkConvert, MakeNestedDir, Rename};
 use crate::event::process::Process;
 use crate::event::recycle::{RecycleBin, Remove};
@@ -16,14 +16,14 @@ pub static DEBUG: Lazy<bool> = Lazy::new(|| {
         Err(_) => false
     }
 });
-pub static TARGET_MAP: Lazy<HashMap<&str, Target>> = Lazy::new(|| {
+pub static MODULE_MAP: Lazy<HashMap<&str, Module>> = Lazy::new(|| {
     HashMap::from([
-        ("rm", Target::Remove(Remove)),
-        ("rb", Target::RecycleBin(RecycleBin)),
-        ("mkndir", Target::MakeNestedDir(MakeNestedDir)),
-        ("rn", Target::Rename(Rename)),
-        ("lc", Target::LinkConvert(LinkConvert)),
-        ("ps", Target::Process(Process)),
+        ("rm", Module::Remove(Remove)),
+        ("rb", Module::RecycleBin(RecycleBin)),
+        ("mkndir", Module::MakeNestedDir(MakeNestedDir)),
+        ("rn", Module::Rename(Rename)),
+        ("lc", Module::LinkConvert(LinkConvert)),
+        ("ps", Module::Process(Process)),
     ])
 });
 
@@ -51,45 +51,55 @@ pub static MAX_RECURSIVE_DEPTH: usize = 64;
 pub static MEM_EXTRACT_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?P<name>\S+):\s+(?P<amount>\d+) kB").unwrap());
 
 #[macro_export]
+macro_rules! debug_info {
+    () => {
+        eprint!("[{}][{}]", "DEBUG".green(), format!("{}:{}", file!(), line!()).cyan());
+    };
+}
+
+#[macro_export]
 macro_rules! debugln {
     ($($arg:tt)*) => {{
         if *DEBUG {
-            print!("[DEBUG] [{}:{}]: ",file!(),line!());
-            println!($($arg)*);
+            debug_info!();
+            eprint!(" ");
+            eprintln!($($arg)*);
         }
     }};
 }
 
 #[macro_export]
 macro_rules! debug_fn {
-    ($($expression:expr), *) => (
+    ($($expression:expr), *) => {
         fn f() {}
         fn type_name_of<T>(_: T) -> &'static str {
             std::any::type_name::<T>()
         }
         let name = type_name_of(f);
         if *DEBUG {
-            print!("[DEBUG] [{}:{}]: ",file!(),line!());
-            print!("Calling {}(),", name.strip_suffix("::f").unwrap());
+            debug_info!();
+            eprint!(" Calling {}(),", name.strip_suffix("::f").unwrap());
             $(
                 {
-                    print!(" {:?} = {:?}", stringify!($expression), &$expression)
+                    eprint!(" {:?} = {:?}", stringify!($expression), &$expression);
                 }
             )*
-            println!()
+            eprintln!();
         }
-    )
+    };
 }
 
 #[macro_export]
 macro_rules! debug_var {
     ($($expression:expr), *) => (
-        $(
-            {
-                debugln!("{:?} = {:#?}",
-                     stringify!($expression),
-                     &$expression)
-            }
-        )*
+        if *DEBUG {
+            $(
+                {
+                    debug_info!();
+                    eprint!(" ");
+                    eprint!("{:?} = {:#?}",stringify!($expression),&$expression);
+                }
+            )*
+        }
     )
 }

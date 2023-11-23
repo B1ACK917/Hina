@@ -1,7 +1,9 @@
 use std::path::PathBuf;
 
-use crate::{DEBUG, debug_fn};
-use crate::core::config::{Config, Flag, RMRecord, Target};
+use colored::Colorize;
+
+use crate::{DEBUG, debug_fn, debug_info};
+use crate::core::config::{Config, Flag, Module, RMRecord};
 use crate::core::error::HinaError;
 use crate::core::func;
 use crate::core::global::{DATA_DIR, RECYCLE};
@@ -49,10 +51,20 @@ impl Executor {
                 _flags: &Flag,
                 _rm_stack: &mut Vec<RMRecord>,
                 args: &Vec<String>) -> Result<(), HinaError> {
-        let args_ = func::parse_args_or(args, String::from("."));
-        for arg in args_ {
-            let arg_path_buf = PathBuf::from(arg);
-            let target = func::get_execute_target(_work_path, &arg_path_buf)?;
+        if args.len() > 0 {
+            for arg in args {
+                module.run(
+                    _work_path,
+                    _data_path,
+                    _recycle_path,
+                    _user,
+                    _uid,
+                    _flags,
+                    _rm_stack,
+                    Some(&arg),
+                )?
+            }
+        } else {
             module.run(
                 _work_path,
                 _data_path,
@@ -61,8 +73,7 @@ impl Executor {
                 _uid,
                 _flags,
                 _rm_stack,
-                &target,
-                args.len(),
+                None,
             )?
         }
         Ok(())
@@ -77,26 +88,26 @@ impl Executor {
         let mut rm_stack = func::load_rm_stack(&self.data_path)?;
 
         match self.config.get_target() {
-            Target::Remove(module) => {
+            Module::Remove(module) => {
                 self.run_iter(module, &self.work_path, &self.data_path, &self.recycle_path, &self.user, &self.uid, flags, &mut rm_stack, args)?
             }
-            Target::RecycleBin(module) => {
+            Module::RecycleBin(module) => {
                 self.run_iter(module, &self.work_path, &self.data_path, &self.recycle_path, &self.user, &self.uid, flags, &mut rm_stack, args)?
             }
-            Target::MakeNestedDir(module) => {
+            Module::MakeNestedDir(module) => {
                 self.run_iter(module, &self.work_path, &self.data_path, &self.recycle_path, &self.user, &self.uid, flags, &mut rm_stack, args)?
             }
-            Target::Process(module) => {
+            Module::Process(module) => {
                 self.run_iter(module, &self.work_path, &self.data_path, &self.recycle_path, &self.user, &self.uid, flags, &mut rm_stack, args)?
             }
-            Target::Rename(module) => {
+            Module::Rename(module) => {
                 self.run_iter(module, &self.work_path, &self.data_path, &self.recycle_path, &self.user, &self.uid, flags, &mut rm_stack, args)?
             }
-            Target::LinkConvert(module) => {
+            Module::LinkConvert(module) => {
                 self.run_iter(module, &self.work_path, &self.data_path, &self.recycle_path, &self.user, &self.uid, flags, &mut rm_stack, args)?
             }
 
-            Target::None(module) => {
+            Module::None(module) => {
                 self.run_iter(module, &self.work_path, &self.data_path, &self.recycle_path, &self.user, &self.uid, flags, &mut rm_stack, args)?
             }
         }

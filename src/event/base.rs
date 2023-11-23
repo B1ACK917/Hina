@@ -12,8 +12,7 @@ pub trait HinaModuleRun {
            _uid: &String,
            _flags: &Flag,
            _rm_stack: &mut Vec<RMRecord>,
-           _target: &PathBuf,
-           _arg_num: usize) -> Result<(), HinaError> {
+           _arg: Option<&String>) -> Result<(), HinaError> {
         let err = format!("Function run not implemented");
         Err(HinaError::NotImplementedError(err))
     }

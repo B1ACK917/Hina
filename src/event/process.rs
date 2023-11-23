@@ -5,10 +5,12 @@ use std::io::Read;
 use std::path::PathBuf;
 use std::string::ToString;
 
-use crate::{debug_fn, debug_var, debugln};
+use colored::Colorize;
+
+use crate::{debug_fn, debug_info, debug_var};
 use crate::core::config::{Flag, RMRecord};
 use crate::core::error::HinaError;
-use crate::core::func::{execute_command, execute_command_in_terminal, print_info, split_and_remove_blank};
+use crate::core::func::{execute_command, execute_command_in_terminal, get_execute_target, parse_path_or, print_info, split_and_remove_blank};
 use crate::core::global::{DEBUG, MEM_EXTRACT_RE};
 use crate::event::base::HinaModuleRun;
 
@@ -76,9 +78,9 @@ impl ProcessInfo {
 }
 
 impl ProcessMapMeta {
-    pub fn from(smap_block: &Vec<&str>, cmdline: &String) -> ProcessMapMeta {
+    pub fn from(smap_block: &Vec<&str>, cmdline: &String) -> Result<ProcessMapMeta, HinaError> {
         debug_fn!(smap_block,cmdline);
-        let keys = split_and_remove_blank(&smap_block[0].to_string(), " ");
+        let keys = split_and_remove_blank(&smap_block[0].to_string(), " ")?;
         let mut maps: HashMap<String, usize> = HashMap::new();
         for line in smap_block {
             let caps = MEM_EXTRACT_RE.captures(line);
@@ -92,7 +94,7 @@ impl ProcessMapMeta {
 
         let range: Vec<&str> = keys[0].split("-").collect();
         let name = if keys.len() > 5 { keys[5].to_string() } else { "".to_string() };
-        return ProcessMapMeta {
+        Ok(ProcessMapMeta {
             _start: range[0].to_string(),
             _end: range[1].to_string(),
             _mode: keys[1].to_string(),
@@ -102,7 +104,7 @@ impl ProcessMapMeta {
             _name: name,
             _maps: maps,
             _cmd: cmdline.replace('\0', " ").trim().to_string(),
-        };
+        })
     }
 }
 
@@ -160,10 +162,9 @@ impl HinaModuleRun for Process {
            _uid: &String,
            _flags: &Flag,
            _rm_stack: &mut Vec<RMRecord>,
-           _target: &PathBuf,
-           _arg_num: usize,
+           _arg: Option<&String>,
     ) -> Result<(), HinaError> {
-        debug_fn!(_work_path,_data_path,_recycle_path,_user,_uid,_flags,_rm_stack,_target,_arg_num);
+        debug_fn!(_work_path,_data_path,_recycle_path,_user,_uid,_flags,_rm_stack,_arg);
         let _help = _flags.parse_bool(vec!["help"]);
         if _help {
             Process::print_help()?;
@@ -180,13 +181,7 @@ impl HinaModuleRun for Process {
             return Ok(());
         }
         if dump {
-            let mut target = if _arg_num > 0 {
-                _target.clone()
-            } else {
-                let mut proc = _work_path.clone();
-                proc.push("proc");
-                proc
-            };
+            let mut target = get_execute_target(_work_path, &parse_path_or(_arg, "proc")?)?;
             Process::dump_proc(_user, _uid, &mut target)?;
             return Ok(());
         }
@@ -228,7 +223,7 @@ impl Process {
         Ok(execute_command(&command)?)
     }
 
-    pub fn build_proc_map_list(smap_input: &String, cmd_input: Option<&String>) -> ProcessMap {
+    pub fn build_proc_map_list(smap_input: &String, cmd_input: Option<&String>) -> Result<ProcessMap, HinaError> {
         debug_fn!(smap_input,cmd_input);
         let lines: Vec<&str> = smap_input.split("\n").collect();
         let mut map_list: Vec<ProcessMapMeta> = Vec::new();
@@ -237,7 +232,7 @@ impl Process {
 
         for line in &lines[1..] {
             if line.contains("-") {
-                map_list.push(ProcessMapMeta::from(&smap_block, cmd_input.unwrap_or(&"".to_string())));
+                map_list.push(ProcessMapMeta::from(&smap_block, cmd_input.unwrap_or(&"".to_string()))?);
                 smap_block.clear();
                 smap_block.push(line);
             } else {
@@ -245,24 +240,24 @@ impl Process {
             }
         }
 
-        return ProcessMap::from(map_list);
+        Ok(ProcessMap::from(map_list))
     }
 
-    pub fn read_mem_detail_from_proc(proc_id: usize) -> Option<ProcessMap> {
+    pub fn read_mem_detail_from_proc(proc_id: usize) -> Result<Option<ProcessMap>, HinaError> {
         debug_fn!(proc_id);
         let smap_file = PathBuf::from(format!("/proc/{}/smaps", proc_id));
         // let cmd_file = PathBuf::from(format!("/proc/{}/cmdline", proc_id));
         return if smap_file.exists() {
             let smap = File::open(smap_file);
             if smap.is_err() {
-                return None;
+                return Ok(None);
             }
             let mut smap_contents = String::new();
             smap.unwrap().read_to_string(&mut smap_contents).unwrap();
-            let process_map = Process::build_proc_map_list(&smap_contents, None);
-            Some(process_map)
+            let process_map = Process::build_proc_map_list(&smap_contents, None)?;
+            Ok(Some(process_map))
         } else {
-            None
+            Ok(None)
         };
     }
     pub fn show_user_all_process(user: &String, uid: &String) -> Result<(), HinaError> {
@@ -384,7 +379,7 @@ impl Process {
         } else { 1 };
 
         for proc_info in user_process {
-            let proc_map_opt = Process::read_mem_detail_from_proc(proc_info._pid);
+            let proc_map_opt = Process::read_mem_detail_from_proc(proc_info._pid)?;
             if proc_map_opt.is_some() {
                 let proc_map = proc_map_opt.unwrap();
                 let output_info: Vec<String>;

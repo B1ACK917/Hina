@@ -1,5 +1,7 @@
 use std::env;
 
+use colored::Colorize;
+
 use crate::core::config::Config;
 use crate::core::error::HinaError;
 use crate::core::executor::Executor;
