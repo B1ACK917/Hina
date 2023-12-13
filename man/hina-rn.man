@@ -41,6 +41,10 @@ Batch rename files recursively in subdirectories.
 .BR \-s, \-\-symlink
 Batch rename symbolic links. Modifies the symbolic link itself, not the target file.
 
+.TP
+.BR \-d, \-\-dir
+Batch rename with renaming directory. By default hina won't rename the directories only if this flag is set.
+
 .SH ARGUMENTS
 .TP
 .BR \fIPATH\fR

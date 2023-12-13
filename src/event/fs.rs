@@ -129,9 +129,10 @@ impl HinaModuleRun for Rename {
         let num = _flags.parse_uint(vec!["n", "num"]);
         let recursive = _flags.parse_bool(vec!["r", "recursive"]);
         let rename_sym = _flags.parse_bool(vec!["s", "symlink"]);
+        let rename_dir = _flags.parse_bool(vec!["d", "dir"]);
 
         let target = get_execute_target(_work_path, &parse_path_or(_arg, ".")?)?;
-        Rename::rename(&target, &in_str, &out_str, &append_str, num, recursive, rename_sym)?;
+        Rename::rename(&target, &in_str, &out_str, &append_str, num, recursive, rename_sym, rename_dir)?;
         Ok(())
     }
 }
@@ -164,6 +165,7 @@ impl Rename {
                         append_str: &String,
                         num: usize,
                         rename_sym: bool,
+                        rename_dir: bool,
                         cur_depth: usize,
                         max_depth: usize) -> Result<(), HinaError> {
         debug_fn!(cur_path,in_str,out_str,append_str,num,rename_sym,cur_depth,max_depth);
@@ -181,9 +183,22 @@ impl Rename {
                     append_str,
                     num,
                     rename_sym,
+                    rename_dir,
                     cur_depth + 1,
                     max_depth,
                 )?;
+                if rename_dir {
+                    let filename = filepath.file_name().unwrap().to_str().unwrap().to_string();
+                    let mut new_path = filepath.parent().unwrap().to_path_buf();
+                    match Rename::rename_string(&filename, in_str, out_str, append_str, num) {
+                        None => {}
+                        Some(new_name) => {
+                            new_path.push(new_name);
+                            fs::rename(&filepath, &new_path).unwrap();
+                            debugln!("{} -> {}", &filepath.display(), &new_path.display())
+                        }
+                    }
+                }
             } else {
                 if rename_sym && filepath.is_symlink() {
                     let src = filepath.read_link().unwrap();
@@ -219,10 +234,11 @@ impl Rename {
               append_str: &String,
               num: usize,
               recursive: bool,
-              rename_sym: bool) -> Result<(), HinaError> {
+              rename_sym: bool,
+              rename_dir: bool) -> Result<(), HinaError> {
         debug_fn!(target,in_str,out_str,append_str,num,recursive,rename_sym);
         let max_depth = if recursive { MAX_RECURSIVE_DEPTH } else { 0 };
-        Rename::rename_recursive(target, in_str, out_str, append_str, num, rename_sym, 0, max_depth)?;
+        Rename::rename_recursive(target, in_str, out_str, append_str, num, rename_sym, rename_dir, 0, max_depth)?;
         Ok(())
     }
 }
