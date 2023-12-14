@@ -211,7 +211,7 @@ impl Rename {
                             debugln!("Symbol link {} -> {}", filepath.display(), new_src)
                         }
                     }
-                } else if !rename_sym && !filepath.is_symlink() {
+                } else if !rename_sym {
                     let filename = filepath.file_name().unwrap().to_str().unwrap().to_string();
                     let mut new_path = filepath.parent().unwrap().to_path_buf();
                     match Rename::rename_string(&filename, in_str, out_str, append_str, num) {
