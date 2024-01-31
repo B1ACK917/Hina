@@ -7,12 +7,11 @@ use std::string::ToString;
 
 use colored::Colorize;
 
-use crate::{debug_fn, debug_info, debug_var};
-use crate::core::config::{Flag, RMRecord};
-use crate::core::error::HinaError;
-use crate::core::func::{execute_command, execute_command_in_terminal, get_execute_target, parse_path_or, print_info, split_and_remove_blank};
-use crate::core::global::{DEBUG, MEM_EXTRACT_RE};
-use crate::event::base::HinaModuleRun;
+use hina_core::{debug_fn, debug_var};
+use hina_core::error::HinaError;
+use hina_core::func::{execute_command, execute_command_in_terminal, get_execute_target, parse_path_or, print_info, split_and_remove_blank};
+use hina_core::globals::MEM_EXTRACT_RE;
+use hina_core::shared::{Flag, HinaModuleRun, RMRecord};
 
 #[derive(Debug, Clone)]
 struct ProcessInfo {

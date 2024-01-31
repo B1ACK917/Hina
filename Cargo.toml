@@ -1,17 +1,18 @@
-[package]
-name = "hina"
-version = "0.3.2"
+[workspace]
+resolver = "2"
+members = [
+    "crates/hina",
+    "crates/hina-core",
+    "crates/hina-lc",
+    "crates/hina-mkndir",
+    "crates/hina-ph",
+    "crates/hina-ps",
+    "crates/hina-rb",
+    "crates/hina-rm",
+    "crates/hina-rn"
+]
+
+[workspace.package]
+version = "0.4.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-once_cell = "1.18.0"
-rand = "0.8.5"
-chrono = "0.4.31"
-execute = "0.2.12"
-regex = "1.10.0"
-serde_json = "1.0.108"
-serde = { version = "1.0.192", features = ["derive"] }
-indexmap = "2.1.0"
-colored = "2.0.4"
+authors = ["B1ACK917"]

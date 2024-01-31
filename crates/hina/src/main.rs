@@ -2,13 +2,10 @@ use std::env;
 
 use colored::Colorize;
 
-use crate::core::config::Config;
-use crate::core::error::HinaError;
-use crate::core::executor::Executor;
-use crate::core::global::DEBUG;
-
-mod core;
-mod event;
+use hina::config::Config;
+use hina::executor::Executor;
+use hina_core::debug_var;
+use hina_core::error::HinaError;
 
 fn main() -> Result<(), HinaError> {
     // Collect args
